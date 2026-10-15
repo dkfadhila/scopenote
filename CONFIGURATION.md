@@ -17,7 +17,7 @@ Frontend dan API berjalan di satu service Render. Semua secret hanya di Environm
 
 ## Email
 
-Domain dktirta.tech sudah terdaftar di Resend. DKIM TXT resend._domainkey dan dua CNAME send serta rsend telah ditambahkan di Cloudflare pada 16 Oktober 2026. Verifikasi domain telah dimulai. Sender dan key sending-only disimpan di Render; full-access key hanya digunakan untuk konfigurasi domain, bukan runtime aplikasi.
+Domain dktirta.tech sudah terdaftar di Resend. DKIM TXT resend._domainkey dan dua CNAME send serta rsend telah ditambahkan di Cloudflare pada 16 Oktober 2026. Domain berstatus Verified; ketiga record DNS terverifikasi. Sender dan key sending-only disimpan di Render; full-access key hanya digunakan untuk konfigurasi domain, bukan runtime aplikasi.
 
 Reset menggunakan link 15 menit sekali pakai, token hash di database, dan mencabut seluruh sesi lama. Verifikasi email berlaku 24 jam. Jika pengiriman gagal, UI menampilkan kegagalannya. Setelah email dikonfigurasi, verifikasi alamat diperlukan sebelum menggunakan AI; edit dan simpan proyek tetap tersedia.
 

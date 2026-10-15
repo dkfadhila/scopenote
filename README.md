@@ -2,7 +2,7 @@
 
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a Markdown proposal.
 
-**Status:** account migration: email/password accounts, private projects, server-side usage limits, password reset and email verification. Fictional judge demo is public. Premium US$1/month is coming soon; no checkout or paid entitlement is enabled. See CONFIGURATION.md for Resend sender setup.
+**Status:** account migration: email/password accounts, private projects, server-side usage limits, password reset and email verification. Fictional judge demo is public. Premium US$1/month is coming soon; no checkout or paid entitlement is enabled. Resend sender domain is verified; verification and reset email delivery plus old-session revocation passed against the production API. See CONFIGURATION.md.
 
 ## Run locally
 

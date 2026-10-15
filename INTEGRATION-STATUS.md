@@ -1,4 +1,6 @@
-> Account migration: 21 automated tests passed and 36 real API assertions against isolated Atlas QA passed, including two-account isolation and logout revocation. Browser checks passed at desktop and 390px without overflow. Resend configuration is stored in Render; domain DNS added and verification started. Provider results below describe the preceding shared-workspace deployment. Premium billing remains unimplemented.
+> Production account verification — 16 October 2026: Render deployed 1b82c94 successfully. /api/account returns accountMode true and emailEnabled true. Resend domain dktirta.tech and all three DNS records are Verified. A synthetic account at the official Resend test inbox received verification and reset emails with delivered events. Verification link succeeded, reset succeeded, the old session returned 401, and login with the new password returned 200. This verifies provider delivery to a test inbox, not placement in every real mail provider. No test password or token is recorded here.
+
+> Account migration: 21 automated tests passed and 36 real API assertions against isolated Atlas QA passed, including two-account isolation and logout revocation. Browser checks passed at desktop and 390px without overflow. Resend is configured in Render; DNS and domain are verified, with production delivery tests recorded above. Provider results below describe the preceding shared-workspace deployment. Premium billing remains unimplemented.
 
 # Integration verification — 16 October 2026
 
