@@ -1,3 +1,5 @@
+> Account migration: 21 automated tests passed and 36 real API assertions against isolated Atlas QA passed, including two-account isolation and logout revocation. Browser checks passed at desktop and 390px without overflow. Resend configuration is stored in Render; domain DNS added and verification started. Provider results below describe the preceding shared-workspace deployment. Premium billing remains unimplemented.
+
 # Integration verification — 16 October 2026
 
 Credentials are stored in Render environment variables. No credentials are included in this report or repository.
