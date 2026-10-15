@@ -2,7 +2,7 @@
 
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a Markdown proposal.
 
-**Status:** account migration: email/password accounts, private projects, server-side usage limits, password reset and email verification. Fictional judge demo is public. Premium US$1/month is coming soon; no checkout or paid entitlement is enabled. Resend sender domain is verified; verification and reset email delivery plus old-session revocation passed against the production API. See CONFIGURATION.md.
+**Status:** account migration: email/password accounts, public Free drafts/scopes, server-side usage limits, password reset and email verification. There is no demo or simulated entry point. Premium US$1/month is coming soon; no checkout or paid entitlement is enabled. Resend sender domain is verified; verification and reset email delivery plus old-session revocation passed against the production API. See CONFIGURATION.md.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-This starts Vite on http://127.0.0.1:5178 and the Express backend on port 3001. Vite forwards `/api` to the backend. Copy `.env.example` to `.env` when ready to configure credentials. No keys are necessary to explore the fictional sample at /draft.html. Real accounts require MongoDB.
+This starts Vite on http://127.0.0.1:5178 and the Express backend on port 3001. Vite forwards `/api` to the backend. Copy `.env.example` to `.env` when ready to configure credentials. Real accounts require MongoDB. Public drafts and scopes can be read without signing in.
 
 ## The six integrations
 
@@ -63,7 +63,7 @@ The Blueprint uses a free web-service plan as a starting configuration. This is 
 - Full scope editing: overview, deliverable titles/details/hours, clarification questions and exclusions.
 - Deterministic rate/currency/contingency arithmetic and proposal export.
 - Voice import: MP3, WAV, M4A, OGG or WebM; up to 12 MB. The transcript replaces the brief only after confirmation. Review transcription before generating a scope.
-- Public fictional sample without paid API calls; real projects require sign-in and Atlas.
+- Free drafts and their complete scopes are public after explicit publication consent. Premium drafts/scopes are private. Existing private records stay private; saving does not silently publish them.
 - Server drafts when MongoDB is configured; failed cloud saves are reported, not silently downgraded to browser storage.
 - MongoDB compare-and-swap revisions prevent silent concurrent overwrites. History and restore are available in the UI and at `/api/projects/:id/history`.
 - Manual saving: edits are not automatically persisted. Switching projects may discard unsaved edits.
@@ -104,10 +104,23 @@ React + Vite, Motion, Phosphor Icons, DM Sans and Instrument Serif; typography i
 
 Source repository: https://github.com/dkfadhila/scopenote
 
-Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The new account mode stores each user’s private projects in MongoDB Atlas. Publishing MIT source does not publish database contents.
+Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The account mode stores projects in Atlas. Free projects explicitly consented for publication appear in the public gallery. Premium and older private records remain private. Publishing MIT source does not grant access to private database records.
 
 ## Community Wisdom
 
 Account tests explicitly check a second user and derive ownership from the session: [The one test that proves no user can see another user’s data](https://dev.to/spoe/the-one-test-that-proves-no-user-can-see-another-users-data-26fp), [Pull the tenant from the auth context, not the request body](https://dev.to/authbyexample1/pull-the-tenant-from-the-auth-context-not-the-request-body-dag).
 
 Commercial launch still needs payment integration, cost validation and an independent security review. No complete production-readiness claim is made.
+
+## Plans and publication
+
+| Plan | Drafts and scopes | Voice | Billing |
+| --- | --- | --- | --- |
+| Free | Public; author must acknowledge publication before first save | 1 transcription/month | Free |
+| Premium | Private to the account | Proposed 10 minutes/month | Proposed US$1/month; coming soon |
+
+Free retains 3 AI scope attempts/month and 5 saved projects. Public pages include the brief, full scope, deliverables, hours, questions, exclusions and estimate. Account email, owner identifier, client metadata and revision history are omitted; authors must still remove confidential information from the text itself. Edits become public when the owner saves them. Deleting the source project removes its public listing; copies already taken elsewhere cannot be recalled. No anonymous edit API is provided. Premium cannot currently be bought or activated from the browser.
+
+The former standalone design draft and sample demo have been removed. [Follow @tirtavex on X](https://x.com/tirtavex).
+
+Publication checks were informed by [Public sharing as a snapshot, not a live editor](https://dev.to/julian_tao_82353720ba9ff5/public-sharing-as-a-snapshot-not-a-live-editor-3gmh), by [Julian Tao](https://dev.to/julian_tao_82353720ba9ff5): separate public identifiers, explicit consent and restricted public fields. ScopeNote publishes the latest explicit save rather than a separate snapshot; there were no comments on the retrieved article.

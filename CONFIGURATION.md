@@ -30,3 +30,7 @@ Node 22.13+: salin .env.example ke .env, isi Atlas dan provider, npm install lal
 Render build: npm ci --include=dev && npm run build. Start: npm start. Health: /api/health. Atlas harus mengizinkan outbound Render. Custom domain memakai CNAME dan HTTPS dari Render.
 
 Free: 3 percobaan scope dan 1 transkripsi per bulan UTC, 5 proyek. Kuota dihitung saat request valid diterima, termasuk kegagalan provider. Premium US$1/bulan masih rancangan, belum ada checkout atau entitlement berbayar.
+
+## Visibilitas paket
+
+Free: draft dan scope baru publik setelah persetujuan publikasi pada penyimpanan pertama. Premium: draft dan scope privat; rencana speech 10 menit/bulan. Record privat lama tidak dipublikasikan otomatis. Payment gateway belum diintegrasikan; Premium tetap Coming soon. Tidak ada demo.

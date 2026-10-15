@@ -1861,3 +1861,13 @@ button:disabled{cursor:default;opacity:.55}
  .usage-line{font-size:13px;max-width:310px}.account-link>svg{flex-shrink:0}
  .modal{max-height:calc(100dvh - 32px);overflow-y:auto}
 }
+/* Real publication and public-reading states. */
+.visibility-notice,.registration-disclosure{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;margin:22px 0 26px;background:#eaf0f6;border-radius:5px;font-size:14px;line-height:1.7;color:var(--ink)}
+.visibility-notice.public{background:#fff0e8;color:#74341f}.visibility-notice>svg,.registration-disclosure>svg{flex-shrink:0;margin-top:3px}.visibility-notice p{margin-top:4px;max-width:850px}
+.publication-consent{display:flex;align-items:flex-start;gap:12px;margin:22px 0!important;line-height:1.65}.publication-consent input{width:20px!important;height:20px!important;min-width:20px;margin-top:3px;accent-color:var(--accent)}
+.public-gallery-note{font-size:15px;color:var(--secondary);line-height:1.75;max-width:760px;margin-bottom:28px}
+.auth-process{padding:0 0 0 23px;display:grid;gap:30px;max-width:470px;counter-reset:steps}.auth-process li{padding-left:10px;font-size:17px}.auth-process h3{font-size:23px;font-weight:550;margin-bottom:9px}.auth-process p{font-size:16px!important;line-height:1.8!important;color:var(--secondary)}
+.auth-story .auth-process{margin-top:48px}.auth-footer{flex-wrap:wrap;gap:15px}.auth-footer a{display:inline-flex;align-items:center;gap:5px;color:inherit;font-size:13px;text-decoration:none}
+.gallery-access{display:flex;align-items:center;gap:8px;color:var(--secondary);font-size:14px;justify-content:center}.gallery-access:hover{color:var(--accent)}
+.read-only .voice-drop,.read-only .card-actions,.read-only .remove-row,.read-only .add-row{display:none}.read-only input,.read-only textarea{cursor:text}.read-only textarea{resize:vertical}
+@media(max-width:600px){.edition-nav nav{gap:21px}.edition-nav nav button{font-size:13px}.visibility-notice{padding:15px;font-size:13px}.app-footer>div{flex-wrap:wrap;row-gap:13px}.public-gallery-note{font-size:14px}.auth-footer{padding-bottom:24px}.publication-consent{font-size:14px!important}}
