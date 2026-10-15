@@ -2,7 +2,7 @@
 
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a Markdown proposal.
 
-**Status:** integrations and configuration are implemented. Real provider calls, Atlas persistence, Sentry delivery and Render deployment still require credentials and external verification. The fictional Tanah example is hand-authored and clearly labeled. No real model output or customer results are claimed yet.
+**Status:** deployed on Render at https://scopenote.dktirta.tech with verified HTTPS. The public health check returns 200 and private project endpoints reject unauthenticated requests. Real provider calls, Atlas persistence and Sentry delivery still require credentials and external verification. The fictional Tanah example is hand-authored and clearly labeled. No real model output or customer results are claimed yet.
 
 ## Run locally
 
@@ -99,4 +99,4 @@ React + Vite, Motion, Phosphor Icons, DM Sans and Instrument Serif; typography i
 
 Source repository: https://github.com/dkfadhila/scopenote
 
-Requested deployment domain: https://scopenote.dktirta.tech (deployment and DNS verification pending). The Render Blueprint declares this custom domain. DNS credentials must include access to the dktirta.tech zone; Cloudflare R2 storage credentials do not establish DNS permissions.
+Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The current deployment requires a workspace password for private APIs and uses browser-local drafts until MongoDB is configured.

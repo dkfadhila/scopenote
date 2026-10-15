@@ -1,4 +1,4 @@
-*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). Work in progress: integrations are implemented, but live provider verification and public demo/repository links are still needed before publication.*
+*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The public app is deployed; live AI provider verification is still needed before publication.*
 
 ## What I Built
 
@@ -10,7 +10,7 @@ The intended customer is a freelancer or small studio preparing several proposal
 
 ## Demo
 
-The app currently runs locally. A public deployment link must be added before publication.
+Try the [public ScopeNote demo](https://scopenote.dktirta.tech). Render serves the frontend and API on a verified HTTPS custom domain. The example editor is available publicly; provider-backed requests require unlocking the private workspace. Gemma, Atlas, ElevenLabs and Sentry still need credentials.
 
 The Tanah Studio example is fictional and explicitly labeled. Its ceramics website brief mentions four pages, mobile support, pending photographs, and an uncertain booking request. The hand-authored sample scope treats the booking service choice as a question and excludes a custom payment system. It is a fixture for exploring the editor, not model-performance evidence.
 
@@ -18,7 +18,7 @@ The interactive app includes editable overview, deliverable titles/details/hours
 
 ## Code
 
-Public source repository: still to be added. The new source is MIT licensed.
+Public source repository: [dkfadhila/scopenote](https://github.com/dkfadhila/scopenote). The source is MIT licensed.
 
 The stack is React/Vite and an Express backend, with Gemma, Mastra, MongoDB Atlas, Sentry Agent Tracing and ElevenLabs. Render deployment is described by a Blueprint. Fonts are bundled; icons are Phosphor and UI motion uses Motion.
 
@@ -81,7 +81,9 @@ Twelve automated tests pass. They cover access control, foreign-origin rejection
 
 Browser checks pass at 390, 768, 1024 and 1440 pixels for the main tabs, estimate editing, draft persistence, export, validation states and reduced motion. The production frontend build passes.
 
-Live Gemma inference, actual ElevenLabs transcription, Atlas persistence, Sentry trace delivery and Render deployment remain unverified because credentials have not been configured. Before publishing I need to connect them, capture genuine evidence and have a freelancer review a scope produced from their own anonymized brief.
+Render deployment is verified: `/api/health` returns 200, the frontend loads on the custom domain, and `/api/projects` returns 401 without a workspace session. The build explicitly uses `npm ci --include=dev` so Vite is installed with `NODE_ENV=production`.
+
+Live Gemma inference, actual ElevenLabs transcription, Atlas persistence and Sentry trace delivery remain unverified because provider credentials have not been configured. Before publishing I need to connect them, capture genuine evidence and have a freelancer review a scope produced from their own anonymized brief.
 
 ## Prize Categories
 
