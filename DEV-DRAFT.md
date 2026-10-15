@@ -1,4 +1,4 @@
-*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The public app is deployed. Initial real-provider checks pass for Gemma/Mastra, Atlas connectivity and Sentry ingestion; ElevenLabs permissions and authenticated production flows still need verification before publication.*
+*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The public app is deployed. Production checks pass for authenticated Gemma/Mastra generation, ElevenLabs voice import, Atlas persistence and export. Sentry ingestion is tested; dashboard evidence and a small quality evaluation are still needed before publication.*
 
 ## What I Built
 
@@ -10,7 +10,7 @@ The intended customer is a freelancer or small studio preparing several proposal
 
 ## Demo
 
-Try the [public ScopeNote demo](https://scopenote.dktirta.tech). Render serves the frontend and API on a verified HTTPS custom domain. The example editor is available publicly; provider-backed requests require unlocking the private workspace. All provider credentials are configured server-side. ElevenLabs still requires an additional key permission before transcription works.
+Try the [public ScopeNote demo](https://scopenote.dktirta.tech). Render serves the frontend and API on a verified HTTPS custom domain. The example editor is available publicly; provider-backed requests require unlocking the private workspace. All provider credentials are configured server-side. Real ElevenLabs transcription has been verified through the production UI with a synthetic English recording.
 
 The Tanah Studio example is fictional and explicitly labeled. Its ceramics website brief mentions four pages, mobile support, pending photographs, and an uncertain booking request. The hand-authored sample scope treats the booking service choice as a question and excludes a custom payment system. It is a fixture for exploring the editor, not model-performance evidence.
 
@@ -89,7 +89,7 @@ The same synthetic brief also completed through the authenticated production UI,
 
 Atlas initially worked from the development environment but failed from Render. After adding Render's two outbound IP ranges to Atlas's access list, the production database check passed. I saved the generated draft, reloaded the app and reopened it from the cloud list. Editing an estimate and saving again produced revision 2 with a snapshot of revision 1. This verifies the persistence path on a synthetic project, not production load or concurrency behavior.
 
-Sentry accepted a synthetic agent trace with HTTP 200; its production dashboard traces still need inspection. An actual ElevenLabs transcription request and a later retry were rejected because the configured key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
+Sentry accepted a synthetic agent trace with HTTP 200; its production dashboard traces still need inspection. ElevenLabs initially rejected the key for missing `speech_to_text` permission. A replacement key passed the real transcription request, and after redeploying it, uploading the synthetic WAV through ScopeNote populated the brief with the transcript. I then ran that transcript through Gemma/Mastra, saved the five-deliverable scope to Atlas and downloaded its Markdown proposal from the production app. This checks the happy path, not accuracy on noisy recordings or other languages. Before publishing I need dashboard evidence and a freelancer's review of a scope produced from their own anonymized brief.
 
 ## Prize Categories
 

@@ -21,7 +21,7 @@ Build order: real inference → complete editor and persisted projects → deplo
 
 ## Possible later additions
 
-- ElevenLabs: voice notes → transcription → Gemma scope extraction, if users need voice briefs. An account-bound event offer currently lists three months of Creator tier, no credit card required; it has not been claimed. Official skills are available from elevenlabs/skills but have not been installed for this project.
+- ElevenLabs is now implemented: uploaded voice notes are transcribed through Scribe and reviewed as text before the Gemma workflow. A real production upload has been verified with synthetic English audio. It is a supporting prize target, subject to the same evidence requirements as the other integrations.
 - .tech: add only if a domain is actually claimed through Hacktoberfest and the live project is reachable on it. Consider renewal costs.
 
 ## Defer for this iteration
@@ -36,4 +36,4 @@ Build order: real inference → complete editor and persisted projects → deplo
 
 ## Current status
 
-Implementation now includes a Render Blueprint, Gemma adapter through a real Mastra workflow, MongoDB project/revision persistence, manual Sentry AI spans, and ElevenLabs speech-to-text upload. Tests cover route contracts and a Mastra workflow with a stub model response. Real model calls, live Atlas persistence, Sentry trace delivery, ElevenLabs transcription, and Render deployment still require credentials and external verification. The UI and README now state hosted data processing rather than local-only privacy. Prize eligibility must not be claimed until those integrations are demonstrated.
+The production app is live on Render at https://scopenote.dktirta.tech. Authenticated real Gemma/Mastra generation, ElevenLabs transcription, Atlas save/reopen/revision history and Markdown export have been verified with synthetic inputs. Sentry accepted a local agent trace with HTTP 200; production dashboard evidence remains to be captured. See `INTEGRATION-STATUS.md` for exact evidence and limitations. The app is a single-owner workspace with hosted processing, not a multi-user or local-only system. No prize entry has been submitted or qualification guaranteed.
