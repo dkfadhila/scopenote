@@ -85,7 +85,9 @@ Render deployment is verified: `/api/health` returns 200, the frontend loads on 
 
 A real Gemma run through the committed Mastra workflow produced a valid scope with three deliverables from a synthetic ceramics-studio brief. It took about 41 seconds, with provider-reported usage of 257 input tokens and 1,887 output tokens. This verifies the integration, not the accuracy of every deliverable or estimate. The visible Tanah fixture is still hand-authored.
 
-Atlas authentication and ping succeeded from the development environment. Sentry accepted a synthetic agent trace with HTTP 200. Production database writes/history and dashboard traces still need inspection. An actual ElevenLabs transcription request was rejected because the key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
+The same synthetic brief also completed through the authenticated production UI, producing three deliverables and four questions; exporting its Markdown proposal succeeded. The generated output separately estimated a contact page already included in the four-page website, which shows why the scope needs human review rather than automatic acceptance.
+
+Atlas authentication and ping succeeded from the development environment, but the authenticated test from Render failed. Network access needs checking against Render's outbound ranges before save/history can be verified. Sentry accepted a synthetic agent trace with HTTP 200; its production dashboard traces still need inspection. An actual ElevenLabs transcription request and a later retry were rejected because the configured key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
 
 ## Prize Categories
 
