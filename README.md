@@ -49,7 +49,7 @@ Do not prefix server secrets with `VITE_`. Never commit `.env`, credentials, pro
 1. Put the contents of this `scopenote` directory at the root of a source repository.
 2. In Render, create a Blueprint using that repository and its `render.yaml`.
 3. Fill the required environment variables. Set `APP_ORIGIN` to the exact Render origin.
-4. Build command: `npm ci && npm run build`. Start command: `npm start`. Health check: `/api/health`.
+4. Build command: `npm ci --include=dev && npm run build`. Start command: `npm start`. Health check: `/api/health`. The explicit dev dependencies include Vite even when `NODE_ENV=production`.
 5. Open **Connections** in the app. Unlock the workspace, inspect configured services, and run **Test database**.
 6. Run a real brief and voice upload, reopen a saved project, inspect Sentry traces, and record evidence before claiming prize-category eligibility.
 
