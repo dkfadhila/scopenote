@@ -1,4 +1,4 @@
-*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The public app is deployed; live AI provider verification is still needed before publication.*
+*Draft for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The public app is deployed. Initial real-provider checks pass for Gemma/Mastra, Atlas connectivity and Sentry ingestion; ElevenLabs permissions and authenticated production flows still need verification before publication.*
 
 ## What I Built
 
@@ -10,7 +10,7 @@ The intended customer is a freelancer or small studio preparing several proposal
 
 ## Demo
 
-Try the [public ScopeNote demo](https://scopenote.dktirta.tech). Render serves the frontend and API on a verified HTTPS custom domain. The example editor is available publicly; provider-backed requests require unlocking the private workspace. Gemma, Atlas, ElevenLabs and Sentry still need credentials.
+Try the [public ScopeNote demo](https://scopenote.dktirta.tech). Render serves the frontend and API on a verified HTTPS custom domain. The example editor is available publicly; provider-backed requests require unlocking the private workspace. All provider credentials are configured server-side. ElevenLabs still requires an additional key permission before transcription works.
 
 The Tanah Studio example is fictional and explicitly labeled. Its ceramics website brief mentions four pages, mobile support, pending photographs, and an uncertain booking request. The hand-authored sample scope treats the booking service choice as a question and excludes a custom payment system. It is a fixture for exploring the editor, not model-performance evidence.
 
@@ -83,7 +83,9 @@ Browser checks pass at 390, 768, 1024 and 1440 pixels for the main tabs, estimat
 
 Render deployment is verified: `/api/health` returns 200, the frontend loads on the custom domain, and `/api/projects` returns 401 without a workspace session. The build explicitly uses `npm ci --include=dev` so Vite is installed with `NODE_ENV=production`.
 
-Live Gemma inference, actual ElevenLabs transcription, Atlas persistence and Sentry trace delivery remain unverified because provider credentials have not been configured. Before publishing I need to connect them, capture genuine evidence and have a freelancer review a scope produced from their own anonymized brief.
+A real Gemma run through the committed Mastra workflow produced a valid scope with three deliverables from a synthetic ceramics-studio brief. It took about 41 seconds, with provider-reported usage of 257 input tokens and 1,887 output tokens. This verifies the integration, not the accuracy of every deliverable or estimate. The visible Tanah fixture is still hand-authored.
+
+Atlas authentication and ping succeeded from the development environment. Sentry accepted a synthetic agent trace with HTTP 200. Production database writes/history and dashboard traces still need inspection. An actual ElevenLabs transcription request was rejected because the key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
 
 ## Prize Categories
 
