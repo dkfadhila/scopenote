@@ -2,7 +2,7 @@
 
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a Markdown proposal.
 
-**Status:** deployed on Render at https://scopenote.dktirta.tech with verified HTTPS. The public health check returns 200 and private project endpoints reject unauthenticated requests. All six services are configured. Workspace login, real Gemma/Mastra scope generation and Markdown export work in production. Atlas connectivity works locally but fails from Render; ElevenLabs still rejects the configured key for missing `speech_to_text` permission. Sentry accepted a local test trace with HTTP 200. See `INTEGRATION-STATUS.md` for evidence and remaining limits. The fictional Tanah example remains hand-authored and clearly labeled; no customer results are claimed.
+**Status:** deployed on Render at https://scopenote.dktirta.tech with verified HTTPS. The public health check returns 200 and private project endpoints reject unauthenticated requests. All six services are configured. Workspace login, real Gemma/Mastra scope generation, Markdown export and Atlas save/reopen/revision history work in production. ElevenLabs still rejects the configured key for missing `speech_to_text` permission. Sentry accepted a local test trace with HTTP 200. See `INTEGRATION-STATUS.md` for evidence and remaining limits. The fictional Tanah example remains hand-authored and clearly labeled; no customer results are claimed.
 
 ## Run locally
 

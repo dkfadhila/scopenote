@@ -87,7 +87,9 @@ A real Gemma run through the committed Mastra workflow produced a valid scope wi
 
 The same synthetic brief also completed through the authenticated production UI, producing three deliverables and four questions; exporting its Markdown proposal succeeded. The generated output separately estimated a contact page already included in the four-page website, which shows why the scope needs human review rather than automatic acceptance.
 
-Atlas authentication and ping succeeded from the development environment, but the authenticated test from Render failed. Network access needs checking against Render's outbound ranges before save/history can be verified. Sentry accepted a synthetic agent trace with HTTP 200; its production dashboard traces still need inspection. An actual ElevenLabs transcription request and a later retry were rejected because the configured key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
+Atlas initially worked from the development environment but failed from Render. After adding Render's two outbound IP ranges to Atlas's access list, the production database check passed. I saved the generated draft, reloaded the app and reopened it from the cloud list. Editing an estimate and saving again produced revision 2 with a snapshot of revision 1. This verifies the persistence path on a synthetic project, not production load or concurrency behavior.
+
+Sentry accepted a synthetic agent trace with HTTP 200; its production dashboard traces still need inspection. An actual ElevenLabs transcription request and a later retry were rejected because the configured key lacks `speech_to_text`; transcription must not be presented as working yet. Before publishing I need to finish those checks and have a freelancer review a scope produced from their own anonymized brief.
 
 ## Prize Categories
 
