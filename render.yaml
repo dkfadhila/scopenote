@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: scopenote
+    runtime: node
+    plan: free
+    domains:
+      - scopenote.dktirta.tech
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: WORKSPACE_PASSWORD
+        sync: false
+      - key: APP_ORIGIN
+        value: https://scopenote.dktirta.tech
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: GEMMA_MODEL
+        value: gemma-4-26b-a4b-it
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: scopenote
+      - key: SENTRY_DSN
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_STT_MODEL
+        value: scribe_v2
