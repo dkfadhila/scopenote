@@ -1871,3 +1871,5 @@ button:disabled{cursor:default;opacity:.55}
 .gallery-access{display:flex;align-items:center;gap:8px;color:var(--secondary);font-size:14px;justify-content:center}.gallery-access:hover{color:var(--accent)}
 .read-only .voice-drop,.read-only .card-actions,.read-only .remove-row,.read-only .add-row{display:none}.read-only input,.read-only textarea{cursor:text}.read-only textarea{resize:vertical}
 @media(max-width:600px){.edition-nav nav{gap:21px}.edition-nav nav button{font-size:13px}.visibility-notice{padding:15px;font-size:13px}.app-footer>div{flex-wrap:wrap;row-gap:13px}.public-gallery-note{font-size:14px}.auth-footer{padding-bottom:24px}.publication-consent{font-size:14px!important}}
+.proposal-brand{display:block;margin-top:20px;font-weight:600;color:var(--ink)}
+.proposal-actions>.form-error{font-size:14px;line-height:1.6;margin:12px 0 18px;color:#9a321b}

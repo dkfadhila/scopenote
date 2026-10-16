@@ -33,4 +33,9 @@ Free: 3 percobaan scope dan 1 transkripsi per bulan UTC, 5 proyek. Kuota dihitun
 
 ## Visibilitas paket
 
-Free: draft dan scope baru publik setelah persetujuan publikasi pada penyimpanan pertama. Premium: draft dan scope privat; rencana speech 10 menit/bulan. Record privat lama tidak dipublikasikan otomatis. Payment gateway belum diintegrasikan; Premium tetap Coming soon. Tidak ada demo.
+Free: draft dan scope baru publik setelah persetujuan publikasi pada penyimpanan pertama. Premium: draft dan scope privat; rencana 10 kali voice import/bulan, masing-masing maksimal 12 MB. Record privat lama tidak dipublikasikan otomatis. Payment gateway belum diintegrasikan; Premium tetap Coming soon. Tidak ada demo.
+
+
+## Ekspor proposal
+
+Free dan Premium sama-sama menyediakan ekspor Markdown dan PDF, dengan nama proyek, nama klien jika tersedia, scope lengkap, estimasi dan kredit “Made with ScopeNote”. PDF dibuat di browser; modul PDF baru dimuat saat tombol Download PDF diklik. Ekspor dari halaman publik tidak mengambil metadata klien privat.
