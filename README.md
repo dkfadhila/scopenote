@@ -63,7 +63,7 @@ The Blueprint uses a free web-service plan as a starting configuration. This is 
 - Full scope editing: overview, deliverable titles/details/hours, clarification questions and exclusions.
 - Deterministic rate/currency/contingency arithmetic, Markdown and PDF proposal export on both plans. Exports include project name, client name when available, full scope, estimate and “Made with ScopeNote”. PDF generation runs locally in the browser and loads only when requested. Public exports include the client name returned by the public API after the owner saves the public draft. They never fetch private owner metadata.
 - Voice import: MP3, WAV, M4A, OGG or WebM; up to 12 MB. The transcript replaces the brief only after confirmation. Review transcription before generating a scope.
-- Free client names, drafts and their complete scopes are public by default when saved; no publication modal or checkbox is required. Premium drafts/scopes are private. Existing private records stay private; saving does not silently publish them.
+- Free client names, drafts and their complete scopes are public by default when saved; no publication modal or checkbox is required. Premium drafts/scopes are private by default, with optional public sharing. Existing private records stay private unless a Premium owner explicitly selects Public and saves.
 - Server drafts when MongoDB is configured; failed cloud saves are reported, not silently downgraded to browser storage.
 - MongoDB compare-and-swap revisions prevent silent concurrent overwrites. History and restore are available in the UI and at `/api/projects/:id/history`.
 - Manual saving: edits are not automatically persisted. Switching projects may discard unsaved edits.
