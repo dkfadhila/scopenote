@@ -71,6 +71,33 @@ test('registration rejects weak passwords and normalized duplicate email address
   await assert.rejects(accounts.register({name:'Other',email:' ADA@EXAMPLE.COM ',password:'Different-password-123!'}),error=>[400,409].includes(error.status));
 });
 
+test('community totals count accounts and only unexpired Premium access',async()=>{
+  const {accounts,db}=await accountFixture();
+  assert.deepEqual(await accounts.publicStats(),{members:0,premiumMembers:0});
+  const users=db.collection('users');
+  users.rows.push(
+    {_id:'free',email:'free@example.com'},
+    {_id:'active',email:'active@example.com',premiumUntil:new Date(Date.now()+86400000)},
+    {_id:'expired',email:'expired@example.com',plan:'Premium',premiumUntil:new Date(Date.now()-1000)},
+    {_id:'spoofed',plan:'Premium'}
+  );
+  assert.deepEqual(await accounts.publicStats(),{members:4,premiumMembers:1});
+});
+
+test('anonymous community endpoint exposes only cached totals and recovers after a failed query',async()=>{
+  let calls=0;
+  const accounts={publicStats:async()=>{calls++;if(calls===1)throw new Error('Database unavailable');return {members:7,premiumMembers:2,email:'never-public@example.com'};}};
+  const app=createApp({accounts:true,origin:'https://scopenote.example'},{accounts,storage:{},generate:async()=>{},telemetry:{captureError(){}}});
+  const server=await new Promise(resolve=>{const instance=app.listen(0,'127.0.0.1',()=>resolve(instance));});
+  const url=`http://127.0.0.1:${server.address().port}/api/public/stats`;
+  try{
+    assert.equal((await fetch(url)).status,500);
+    const responses=await Promise.all(Array.from({length:4},()=>fetch(url).then(r=>r.json())));
+    for(const data of responses)assert.deepEqual(data,{members:7,premiumMembers:2});
+    assert.equal(calls,2);
+  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
 test('password reset is unavailable explicitly when delivery is unconfigured',async()=>{
   const {accounts}=await accountFixture({resendKey:'',emailFrom:''},false);
   await assert.rejects(accounts.requestReset('ada@example.com'),error=>error.status===503);

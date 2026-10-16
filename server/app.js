@@ -27,6 +27,15 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
     if(origin&&origin!==(config.origin||'http://127.0.0.1:5178')&&!(!config.production&&/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)))return res.status(403).json({error:'Request origin is not allowed.'});next();
   });
   const authenticated=req=>config.accounts?!!req.user:!config.password||validSession(sessionFrom(req),config.sessionSecret);
+  let communityStats,communityStatsUntil=0,communityStatsPending;
+  app.get('/api/public/stats',rateLimit({windowMs:60000,limit:30,standardHeaders:'draft-7',legacyHeaders:false}),async(_req,res)=>{
+    if(!accounts)return res.status(503).json({error:'Community totals are unavailable.'});
+    if(!communityStats||Date.now()>=communityStatsUntil){
+      if(!communityStatsPending)communityStatsPending=accounts.publicStats().then(stats=>{communityStats={members:stats.members,premiumMembers:stats.premiumMembers};communityStatsUntil=Date.now()+60000;return communityStats;}).finally(()=>{communityStatsPending=null;});
+      await communityStatsPending;
+    }
+    res.json(communityStats);
+  });
   app.use('/api',async(req,_res,next)=>{if(accounts)req.user=await accounts.resolve(tokenFrom(req));next();});
   const authLimit=rateLimit({windowMs:15*60000,limit:15,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many account attempts. Please try again in 15 minutes.'}});
   const resetLimit=rateLimit({windowMs:15*60000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Please wait before requesting another email or password change.'}});

@@ -26,6 +26,7 @@ const currency = (n, code = 'USD') => new Intl.NumberFormat('en-US', {
 function App() {
   const [page, setPage] = useState('Sign in'),
     [work, setWork] = useState(structuredClone(blankProject));
+  const [communityStats,setCommunityStats]=useState(null);
   const [projects, setProjects] = useState([]),
     [plan, setPlan] = useState('Free'),
     [query, setQuery] = useState(''),
@@ -146,6 +147,13 @@ function App() {
     try{const data=await api('/api/billing/checkout',{method:'POST'});const url=new URL(data.checkoutUrl);if(url.protocol!=='https:')throw new Error('The checkout link is invalid. Please try again.');if(!data.orderId)throw new Error('The checkout order is missing. Please try again.');setBillingOrderId(data.orderId);setPayment({status:'pending'});window.history.replaceState(null,'',location.pathname+'#billing='+encodeURIComponent(data.orderId));window.location.assign(url.href);}
     catch(e){setBillingError(e.message);setBillingBusy(false);}
   }
+  useEffect(()=>{
+    let active=true;
+    fetch('/api/public/stats').then(async response=>response.ok?response.json():null).then(stats=>{
+      if(active&&Number.isSafeInteger(stats?.members)&&stats.members>=0&&Number.isSafeInteger(stats?.premiumMembers)&&stats.premiumMembers>=0)setCommunityStats(stats);
+    }).catch(()=>{});
+    return()=>{active=false;};
+  },[]);
   useEffect(() => {
     let active = true;
     (async () => {
@@ -608,7 +616,7 @@ function App() {
                 go('Sign in');
               }}>Back to sign in <ArrowRight size={17} /></button>}
         {authError && ['request', 'email'].includes(resetStep) && <p role="alert" className="form-error">{authError}</p>}{resetStep !== 'done' && <button className="back-link centered" onClick={() => go('Sign in')}><ArrowLeft size={15} /> Back to sign in</button>}
-      </> : <><h1>{page === 'Sign in' ? 'Sign in.' : 'Get started.'}</h1><p className="auth-description">{page === 'Sign in' ? 'Your briefs, scopes and proposals. Right where you left them.' : 'Start free, with no payment details. New Free client names, drafts and scopes are public when saved.'}</p><form onSubmit={authenticate}>
+      </> : <><h1>{page === 'Sign in' ? 'Sign in.' : 'Get started.'}</h1><p className="auth-description">{page === 'Sign in' ? 'Your briefs, scopes and proposals. Right where you left them.' : 'Start free, with no payment details. New Free client names, drafts and scopes are public when saved.'}</p>{communityStats&&<p className="community-stats" aria-label="Community totals"><span><strong>{communityStats.members.toLocaleString('en-US')}</strong> {communityStats.members===1?'member':'members'} joined</span><span><strong>{communityStats.premiumMembers.toLocaleString('en-US')}</strong> active Premium {communityStats.premiumMembers===1?'member':'members'}</span></p>}<form onSubmit={authenticate}>
         {page === 'Create account' && <label>Your name<input name="name" required maxLength={80} placeholder="What should we call you?" autoComplete="name" /></label>}
         <label>Email address<input type="email" name="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@yourstudio.com" autoComplete="email" /></label>
         <div className="auth-password"><div className="label-row"><label htmlFor="auth-password">Password</label>{page === 'Sign in' && <button type="button" className="text-link" onClick={() => {

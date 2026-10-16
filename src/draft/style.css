@@ -931,6 +931,8 @@ margin:17px 0 30px}
 .auth-form-wrap form{
 display:grid;
 gap:23px}
+.community-stats{display:flex;flex-wrap:wrap;column-gap:20px;row-gap:5px;margin:-12px 0 28px;font-size:12px;line-height:1.6;color:var(--muted)}
+.community-stats strong{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .auth-form-wrap label{
 font-size:14px}
 .auth-form-wrap input{

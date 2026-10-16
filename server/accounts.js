@@ -58,6 +58,11 @@ export function createAccounts(config,storage,{sendMail}={}){
   }
   return {
     mailReady,
+    async publicStats(){
+      const users=(await db()).collection('users');
+      const [members,premiumMembers]=await Promise.all([users.countDocuments({}),users.countDocuments({premiumUntil:{$gt:new Date()}})]);
+      return {members,premiumMembers};
+    },
     async register(input){
       const data=credentials(input,true),d=await db();await counter(`signups:${new Date().toISOString().slice(0,10)}`,30);
       const user={_id:randomUUID(),...data,passwordHash:await hashPassword(data.password),passwordVersion:0,emailVerified:false,createdAt:new Date()};delete user.password;
