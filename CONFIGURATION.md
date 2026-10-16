@@ -25,7 +25,7 @@ Tanpa email terkonfigurasi, reset mengembalikan pesan layanan belum aktif. Konfi
 
 ## Run dan deploy
 
-Node 22.13+: salin .env.example ke .env, isi Atlas dan provider, npm install lalu npm run dev. Port frontend 5178, backend 3001. /draft.html adalah simulasi, / memakai API nyata. Akun individual memerlukan Atlas.
+Node 22.13+: salin .env.example ke .env, isi Atlas dan provider, npm install lalu npm run dev. Port frontend 5178, backend 3001. /draft.html mengarahkan ke /; tidak ada demo. Akun individual memerlukan Atlas.
 
 Render build: npm ci --include=dev && npm run build. Start: npm start. Health: /api/health. Atlas harus mengizinkan outbound Render. Custom domain memakai CNAME dan HTTPS dari Render.
 
@@ -33,7 +33,15 @@ Free: 3 percobaan scope dan 1 transkripsi per bulan UTC, 5 proyek. Kuota dihitun
 
 ## Visibilitas paket
 
-Free: draft dan scope baru publik setelah persetujuan publikasi pada penyimpanan pertama. Premium: draft dan scope privat; rencana 10 kali voice import/bulan, masing-masing maksimal 12 MB. Record privat lama tidak dipublikasikan otomatis. Payment gateway belum diintegrasikan; Premium tetap Coming soon. Tidak ada demo.
+Free: nama klien, draft dan scope baru langsung publik saat disimpan, tanpa dialog konfirmasi. Premium: draft dan scope privat; rencana 10 kali voice import/bulan, masing-masing maksimal 12 MB. Record privat lama tidak dipublikasikan otomatis. Premium tetap Coming soon. Tidak ada demo.
+
+## AllScale — pemeriksaan koneksi saja
+
+Isi `ALLSCALE_API_KEY` dan `ALLSCALE_API_SECRET` hanya di `.env` lokal yang diabaikan Git. Jalankan `node scripts/check-allscale.mjs` untuk menguji signed GET, penanganan error, dan signed POST ke endpoint tes resmi. Script tidak membuat checkout, tagihan, atau transfer. Jangan memakai awalan VITE_ untuk kredensial.
+
+Panduan resmi: https://allscale.io/skill. API tunggal: https://openapi.allscale.io; lingkungan tes memakai kredensial test store, bukan base URL sandbox terpisah. Test store tetap dapat melibatkan dana sungguhan jika melakukan pembayaran; probe koneksi ini tidak melakukan pembayaran.
+
+AllScale Checkout saat ini hanya pembayaran sekali dan top-up, bukan auto-renew subscription: https://www.allscale.io/solutions/one-person-companies. `ALLSCALE_CHECKOUT_ENABLED=false` adalah penanda konfigurasi yang disiapkan; belum ada endpoint checkout atau aktivasi Premium. Pilihan produk prabayar, verifikasi webhook, pemenuhan akses idempoten, serta gateway untuk langganan otomatis harus diselesaikan sebelum penjualan diaktifkan. Kredensial belum dipasang di Render.
 
 
 ## Ekspor proposal
