@@ -7,7 +7,10 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const error=(status,message)=>Object.assign(new Error(message),{status});
 const emailSchema=z.string().trim().toLowerCase().email().max(254);
 const passwordSchema=z.string().min(10).max(128);
-const userView=u=>({id:u._id,name:u.name,email:u.email,plan:'Free',emailVerified:!!u.emailVerified});
+const day=86400000,billingPeriod=30*day;
+const dateValue=value=>value?new Date(value).getTime():NaN;
+const premiumActive=u=>Number.isFinite(dateValue(u?.premiumUntil))&&dateValue(u.premiumUntil)>Date.now();
+const userView=u=>({id:u._id,name:u.name,email:u.email,plan:premiumActive(u)?'Premium':'Free',premiumUntil:Number.isFinite(dateValue(u.premiumUntil))?new Date(u.premiumUntil).toISOString():null,emailVerified:!!u.emailVerified});
 const cookieAge=7*86400000;
 export async function hashPassword(password){const salt=randomBytes(16).toString('hex');const key=await derive(password,salt,64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return `scrypt:${salt}:${key.toString('hex')}`;}
 export async function checkPassword(password,encoded){
@@ -46,6 +49,16 @@ export function createAccounts(config,storage,{sendMail}={}){
     try{await col.updateOne({_id:id},{$setOnInsert:{count:0,expiresAt:new Date(Date.now()+35*86400000)}},{upsert:true});}catch(e){if(e.code!==11000)throw e;}
     const r=await col.findOneAndUpdate({_id:id,count:{$lt:limit}},{$inc:{count:1}},{returnDocument:'after'});
     if(!r)throw error(429,'The usage limit has been reached. You can still edit, save and export existing projects.');
+  }
+  async function quota(id){
+    const user=await(await db()).collection('users').findOne({_id:id}),now=Date.now();
+    if(premiumActive(user)){
+      const started=dateValue(user.premiumStartedAt),anchor=Number.isFinite(started)?started:dateValue(user.premiumUntil)-billingPeriod;
+      const start=anchor+Math.max(0,Math.floor((now-anchor)/billingPeriod))*billingPeriod;
+      return {period:`premium:${new Date(start).toISOString()}`,periodStart:new Date(start).toISOString(),periodEnd:new Date(Math.min(start+billingPeriod,dateValue(user.premiumUntil))).toISOString(),scopeLimit:3,voiceLimit:10,projectLimit:5};
+    }
+    const date=new Date(now),start=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),1)),end=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,1));
+    return {period:date.toISOString().slice(0,7),periodStart:start.toISOString(),periodEnd:end.toISOString(),scopeLimit:3,voiceLimit:1,projectLimit:5};
   }
   return {
     mailReady,
@@ -97,7 +110,7 @@ export function createAccounts(config,storage,{sendMail}={}){
       if(!u)throw error(400,'This verification link is invalid or expired.');return {ok:true};
     },
     async profile(id,name){if(typeof name!=='string'||!name.trim()||name.length>80)throw error(400,'Use a name between 1 and 80 characters.');const u=await(await db()).collection('users').findOneAndUpdate({_id:id},{$set:{name:name.trim()}},{returnDocument:'after'});return userView(u);},
-    async usage(id){const month=new Date().toISOString().slice(0,7),col=(await db()).collection('accountUsage');const [scopes,voice]=await Promise.all(['scopes','voice'].map(kind=>col.findOne({_id:`${id}:${kind}:${month}`})));return {scopes:scopes?.count||0,voice:voice?.count||0,scopeLimit:3,voiceLimit:1,projectLimit:5,period:month};},
-    async consume(id,kind){await counter(`global-ai:${new Date().toISOString().slice(0,10)}`,config.dailyAiLimit||50);await counter(`${id}:${kind}:${new Date().toISOString().slice(0,7)}`,kind==='scopes'?3:1);}
+    async usage(id){const limits=await quota(id),col=(await db()).collection('accountUsage');const [scopes,voice]=await Promise.all(['scopes','voice'].map(kind=>col.findOne({_id:`${id}:${kind}:${limits.period}`})));return {scopes:scopes?.count||0,voice:voice?.count||0,...limits};},
+    async consume(id,kind){if(!['scopes','voice'].includes(kind))throw error(400,'Unknown AI usage type.');const limits=await quota(id);await counter(`global-ai:${new Date().toISOString().slice(0,10)}`,config.dailyAiLimit||50);await counter(`${id}:${kind}:${limits.period}`,kind==='scopes'?limits.scopeLimit:limits.voiceLimit);}
   };
 }

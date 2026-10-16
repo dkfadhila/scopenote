@@ -29,20 +29,23 @@ Node 22.13+: salin .env.example ke .env, isi Atlas dan provider, npm install lal
 
 Render build: npm ci --include=dev && npm run build. Start: npm start. Health: /api/health. Atlas harus mengizinkan outbound Render. Custom domain memakai CNAME dan HTTPS dari Render.
 
-Free: 3 percobaan scope dan 1 transkripsi per bulan UTC, 5 proyek. Kuota dihitung saat request valid diterima, termasuk kegagalan provider. Premium US$1/bulan masih rancangan, belum ada checkout atau entitlement berbayar.
+Free: 3 percobaan scope dan 1 transkripsi per bulan UTC, 5 proyek. Kuota dihitung saat request valid diterima, termasuk kegagalan provider. Premium US$1 sekali bayar untuk akses 30 hari, tanpa subscription atau tagihan otomatis. Premium mendapat 10 voice import/30 hari, 3 scope/30 hari dan 5 proyek.
 
 ## Visibilitas paket
 
-Free: nama klien, draft dan scope baru langsung publik saat disimpan, tanpa dialog konfirmasi. Premium: draft dan scope privat; rencana 10 kali voice import/bulan, masing-masing maksimal 12 MB. Record privat lama tidak dipublikasikan otomatis. Premium tetap Coming soon. Tidak ada demo.
+Free: nama klien, draft dan scope baru langsung publik saat disimpan, tanpa dialog konfirmasi. Premium: draft dan scope privat; 10 kali voice import/30 hari, masing-masing maksimal 12 MB. Record privat lama tidak dipublikasikan otomatis. Checkout hanya tersedia ketika konfigurasi AllScale di server aktif. Tidak ada demo.
 
-## AllScale — pemeriksaan koneksi saja
+## AllScale — Premium prabayar
 
-Isi `ALLSCALE_API_KEY` dan `ALLSCALE_API_SECRET` hanya di `.env` lokal yang diabaikan Git. Jalankan `node scripts/check-allscale.mjs` untuk menguji signed GET, penanganan error, dan signed POST ke endpoint tes resmi. Script tidak membuat checkout, tagihan, atau transfer. Jangan memakai awalan VITE_ untuk kredensial.
+Simpan `ALLSCALE_API_KEY` dan `ALLSCALE_API_SECRET` di Environment Render atau `.env` lokal yang diabaikan Git. Jangan gunakan awalan VITE_. `ALLSCALE_CHECKOUT_ENABLED=true` mengaktifkan checkout; default false. Key store Checkout baru sudah berhasil membuat intent US$1 dan membaca detail pesanan, tanpa pembayaran nyata.
 
-Panduan resmi: https://allscale.io/skill. API tunggal: https://openapi.allscale.io; lingkungan tes memakai kredensial test store, bukan base URL sandbox terpisah. Test store tetap dapat melibatkan dana sungguhan jika melakukan pembayaran; probe koneksi ini tidak melakukan pembayaran.
+Di pengaturan Checkout store AllScale, isi Webhook URL: `https://scopenote.dktirta.tech/api/billing/allscale/webhook`. Redirect URL ditetapkan per pesanan oleh server. Panduan resmi: https://allscale.io/skill. API tunggal https://openapi.allscale.io; test store tidak menjamin pembayaran tanpa dana sungguhan.
 
-AllScale Checkout saat ini hanya pembayaran sekali dan top-up, bukan auto-renew subscription: https://www.allscale.io/solutions/one-person-companies. `ALLSCALE_CHECKOUT_ENABLED=false` adalah penanda konfigurasi yang disiapkan; belum ada endpoint checkout atau aktivasi Premium. Pilihan produk prabayar, verifikasi webhook, pemenuhan akses idempoten, serta gateway untuk langganan otomatis harus diselesaikan sebelum penjualan diaktifkan. Kredensial belum dipasang di Render.
+Alur: pengguna masuk, memilih US$1 sekali untuk 30 hari, membuka checkout hosted AllScale, lalu kembali ke `#billing=<orderId>`. Tombol Check payment membaca status provider melalui server. Webhook diverifikasi menggunakan raw body, HMAC, timestamp, key, ID dan nonce. Server mencocokkan intent, 100 USD cents, currency, order dan user sebelum pemberian akses. Satu update atomik pada dokumen pengguna menyimpan order yang dipenuhi dan menambah 30 hari; replay atau retry setelah ledger gagal tidak memberi akses dua kali. Tidak ada subscription atau auto-debit. Pembelian berikutnya menambah 30 hari pada sisa akses aktif.
 
+Sesudah expiry, akun kembali Free; proyek privat lama tetap privat dan dapat diedit/diekspor. Scope dan voice Premium dihitung pada periode 30 hari dari aktivasi; Free memakai bulan UTC. Tidak ada refund otomatis atau pembayaran keluar yang diimplementasikan. Pembayaran nyata dan webhook live belum teruji; uji itu perlu dilakukan dengan akun pemilik sebelum mengumumkan penjualan siap digunakan.
+
+Tes koneksi tanpa pembayaran: `node scripts/check-allscale.mjs`. Tes regresi billing: `node --test server/billing.test.js server/accounts.test.js`.
 
 ## Ekspor proposal
 

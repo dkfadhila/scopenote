@@ -39,3 +39,9 @@ services:
         sync: false
       - key: ELEVENLABS_STT_MODEL
         value: scribe_v2
+      - key: ALLSCALE_API_KEY
+        sync: false
+      - key: ALLSCALE_API_SECRET
+        sync: false
+      - key: ALLSCALE_CHECKOUT_ENABLED
+        value: 'false'

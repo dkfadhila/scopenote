@@ -138,3 +138,15 @@ test('save routes derive plan and owner from session without any publication con
     assert.deepEqual(calls[1][2],{plan:'Free'},'obsolete confirmation fields cannot affect saving');
   });
 });
+
+test('expired Premium cannot silently publish a new draft requested as private',async()=>{
+  let writes=0;
+  await withServer({save:async()=>{writes++;return project;}},async request=>{
+    const result=await request(`/api/projects/${project.id}`,{cookie:'alice',body:{...project,revision:0,requirePrivate:true}});
+    assert.equal(result.status,409);
+    assert.equal(writes,0);
+    const existing=await request(`/api/projects/${project.id}`,{cookie:'alice',body:{...project,revision:1,requirePrivate:true}});
+    assert.equal(existing.status,200,'existing private drafts remain editable on expiry');
+    assert.equal(writes,1);
+  });
+});

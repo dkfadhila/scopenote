@@ -5,6 +5,7 @@ export function readConfig(env = process.env) {
     password: env.WORKSPACE_PASSWORD || '', sessionSecret: env.SESSION_SECRET || '',
     googleKey: env.GOOGLE_GENERATIVE_AI_API_KEY || '', model: env.GEMMA_MODEL || 'gemma-4-26b-a4b-it',
     mongoUri: env.MONGODB_URI || '', mongoDb: env.MONGODB_DATABASE || 'scopenote',
+    allscaleKey:env.ALLSCALE_API_KEY||'',allscaleSecret:env.ALLSCALE_API_SECRET||'',allscaleEnabled:env.ALLSCALE_CHECKOUT_ENABLED==='true',
     sentryDsn: env.SENTRY_DSN || '', elevenKey: env.ELEVENLABS_API_KEY || '', elevenModel: env.ELEVENLABS_STT_MODEL || 'scribe_v2'
   };
   if (!/^gemma[-a-zA-Z0-9.:]+$/.test(config.model)) throw new Error('GEMMA_MODEL must identify an actual Gemma model, not Gemini or another family.');

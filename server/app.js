@@ -8,13 +8,17 @@ import { fileURLToPath } from 'node:url';
 import { projectInput, projectId, briefInput } from './schemas.js';
 import { createSession, validSession, sessionFrom, passwordMatches } from './auth.js';
 import {createAccounts} from './accounts.js';
+import {createBilling} from './billing.js';
 
-export function createApp(config,{storage,generate,telemetry,transcribe=transcribeAudio,accounts:providedAccounts}){
+export function createApp(config,{storage,generate,telemetry,transcribe=transcribeAudio,accounts:providedAccounts,billing:providedBilling}){
   const app=express();app.disable('x-powered-by');if(config.production)app.set('trust proxy',1);
   const accounts=providedAccounts||(config.accounts?createAccounts(config,storage):null);
+  const billing=providedBilling||createBilling(config,storage);
   const tokenFrom=req=>req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith('scopenote_account='))?.slice('scopenote_account='.length);
   const cookieOptions={httpOnly:true,secure:config.production,sameSite:'strict',maxAge:7*86400000,path:'/'};
   app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');if(config.production){res.setHeader('Strict-Transport-Security','max-age=31536000');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");}next();});
+  const webhookLimit=rateLimit({windowMs:60000,limit:120,standardHeaders:'draft-7',legacyHeaders:false});
+  app.post('/api/billing/allscale/webhook',webhookLimit,express.raw({type:'application/json',limit:'32kb'}),async(req,res)=>{if(!Buffer.isBuffer(req.body))return res.status(400).json({error:'A JSON payment notification is required.'});res.json(await billing.webhook({headers:req.headers,rawBody:req.body,path:req.originalUrl}));});
   app.use(express.json({limit:'96kb'}));
   app.get('/draft.html',(_req,res)=>res.redirect(301,'/'));
   app.use('/api',(req,res,next)=>{
@@ -27,6 +31,11 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
   const resetLimit=rateLimit({windowMs:15*60000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Please wait before requesting another email or password change.'}});
   const requireUser=(req,res,next)=>req.user?next():res.status(401).json({error:'Sign in to access your private projects.'});
   const requireAccounts=(_req,res,next)=>accounts?next():res.status(503).json({error:'Individual accounts are not enabled on this deployment yet.'});
+  app.get('/api/billing',(req,res)=>res.json(billing.info(req.user)));
+  const paymentLimit=rateLimit({windowMs:60000,limit:5,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Please wait a minute before checking or creating another payment.'}});
+  app.post('/api/billing/checkout',requireAccounts,requireUser,paymentLimit,async(req,res)=>res.json(await billing.checkout(req.user)));
+  app.get('/api/billing/orders/:id',requireAccounts,requireUser,paymentLimit,async(req,res)=>res.json(await billing.get(req.params.id,req.user.id)));
+  app.post('/api/billing/orders/:id/refresh',requireAccounts,requireUser,paymentLimit,async(req,res)=>res.json(await billing.refresh(req.params.id,req.user.id)));
   app.get('/api/public/projects',async(_req,res)=>res.json({projects:await storage.publicList()}));
   app.get('/api/public/projects/:shareId',async(req,res)=>{if(!/^[a-f0-9-]{36}$/.test(req.params.shareId))return res.status(404).json({error:'Public draft not found.'});const project=await storage.publicGet(req.params.shareId);res.status(project?200:404).json(project?{project}:{error:'Public draft not found.'});});
   app.get('/api/account',requireAccounts,async(req,res)=>res.json({accountMode:true,user:req.user||null,usage:req.user?await accounts.usage(req.user.id):null,emailEnabled:accounts.mailReady()}));
@@ -53,7 +62,7 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
   app.post('/api/scope',aiLimit,async(req,res,next)=>{if(!briefInput.safeParse(req.body).success)return res.status(400).json({error:'Use a brief of 30–20,000 characters.'});if(!config.googleKey)return res.status(503).json({error:'AI drafting is not configured yet. Please try again later.'});next();},aiQuota('scopes'),async(req,res)=>res.json(await generate(briefInput.parse(req.body).brief)));
   app.get('/api/projects',async(req,res)=>res.json({projects:await storage.list(req.user?.id)}));
   const editLimit=rateLimit({windowMs:60000,limit:30,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many changes. Please wait a minute.'}});
-  app.put('/api/projects/:id',editLimit,async(req,res)=>{const input=projectInput.safeParse(req.body);if(!input.success||input.data.id!==req.params.id)return res.status(400).json({error:'Invalid project. Check required fields, scope and estimates.'});res.json({project:await storage.save(input.data,req.user?.id,{plan:req.user?.plan||'Free'})});});
+  app.put('/api/projects/:id',editLimit,async(req,res)=>{const input=projectInput.safeParse(req.body);if(!input.success||input.data.id!==req.params.id)return res.status(400).json({error:'Invalid project. Check required fields, scope and estimates.'});if(req.body.requirePrivate===true&&!input.data.revision&&req.user?.plan!=='Premium')return res.status(409).json({error:'Premium expired before this private draft was saved. Review the Free public visibility notice before saving again.'});res.json({project:await storage.save(input.data,req.user?.id,{plan:req.user?.plan||'Free'})});});
   app.get('/api/projects/:id/history',async(req,res)=>{if(!projectId.safeParse(req.params.id).success)return res.status(400).json({error:'Invalid project ID.'});res.json({history:await storage.history(req.params.id,req.user?.id)});});
   app.delete('/api/projects/:id',editLimit,async(req,res)=>{if(!projectId.safeParse(req.params.id).success)return res.status(400).json({error:'Invalid project ID.'});const removed=await storage.remove(req.params.id,req.user?.id);res.status(removed?200:404).json(removed?{ok:true}:{error:'Draft not found.'});});
   app.get('/api/check-database',async(_req,res)=>{await storage.ping();res.json({status:'connected'});});

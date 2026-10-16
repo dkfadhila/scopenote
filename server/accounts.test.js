@@ -115,6 +115,62 @@ test('verification tokens are single-use and free usage limits isolate each user
   await assert.rejects(accounts.consume(user.id,'voice'),error=>error.status===429);
 });
 
+test('Premium entitlement is read from paid expiry, never a client plan field, and expires immediately',async()=>{
+  const {accounts,db}=await accountFixture();
+  const {user,token}=await accounts.register({name:'Paid user',email:'paid@example.com',password:'Long-password-123!',plan:'Premium',premiumUntil:new Date(Date.now()+86400000).toISOString()});
+  assert.equal(user.plan,'Free');assert.equal(user.premiumUntil,null);
+  const stored=db.collection('users').rows.find(row=>row._id===user.id);
+  stored.plan='Premium';
+  assert.equal((await accounts.resolve(token)).plan,'Free','a plan string cannot grant entitlement');
+  stored.premiumStartedAt=new Date(Date.now()-86400000);stored.premiumUntil=new Date(Date.now()+29*86400000);
+  const paid=await accounts.resolve(token);
+  assert.equal(paid.plan,'Premium');assert.equal(paid.premiumUntil,stored.premiumUntil.toISOString());
+  stored.premiumUntil=new Date(Date.now()-1000);
+  const expired=await accounts.resolve(token);
+  assert.equal(expired.plan,'Free');
+  assert.equal((await accounts.usage(user.id)).voiceLimit,1);
+  stored.premiumUntil='invalid';
+  assert.equal((await accounts.resolve(token)).plan,'Free');assert.equal((await accounts.resolve(token)).premiumUntil,null);
+});
+
+test('Premium allows ten voice imports per anchored billing period while scopes stay capped at three',async()=>{
+  const {accounts,db}=await accountFixture();
+  const {user}=await accounts.register({name:'Paid user',email:'paid@example.com',password:'Long-password-123!'});
+  const stored=db.collection('users').rows.find(row=>row._id===user.id);
+  const started=new Date(Date.now()-5*86400000);stored.premiumStartedAt=started;stored.premiumUntil=new Date(started.getTime()+30*86400000);
+  const initial=await accounts.usage(user.id);
+  assert.equal(initial.periodStart,started.toISOString());assert.equal(initial.periodEnd,stored.premiumUntil.toISOString());
+  assert.equal(initial.voiceLimit,10);assert.equal(initial.scopeLimit,3);assert.equal(initial.projectLimit,5);
+  await Promise.all(Array.from({length:10},()=>accounts.consume(user.id,'voice')));
+  await assert.rejects(accounts.consume(user.id,'voice'),error=>error.status===429);
+  assert.equal((await accounts.usage(user.id)).voice,10);
+  await Promise.all(Array.from({length:3},()=>accounts.consume(user.id,'scopes')));
+  await assert.rejects(accounts.consume(user.id,'scopes'),error=>error.status===429);
+  assert.equal((await accounts.usage(user.id)).scopes,3);
+  const counter=db.collection('accountUsage').rows.find(row=>row._id===`${user.id}:voice:${initial.period}`);
+  assert.equal(counter.count,10,'read and consume use the identical billing period counter');
+});
+
+test('Premium renewal advances anchored thirty-day quota windows independently from calendar months',async()=>{
+  const {accounts,db}=await accountFixture();
+  const {user}=await accounts.register({name:'Renewed user',email:'renewed@example.com',password:'Long-password-123!'});
+  const stored=db.collection('users').rows.find(row=>row._id===user.id);
+  stored.premiumStartedAt=new Date(Date.now()-2*86400000);stored.premiumUntil=new Date(Date.now()+58*86400000);
+  const first=await accounts.usage(user.id);await accounts.consume(user.id,'voice');
+  assert.equal((await accounts.usage(user.id)).voice,1);
+  // Move the anchor back one full cycle to model entering the renewed period.
+  // Its expected start is still the original current-period start, so no reset
+  // occurs merely because an entitlement was extended.
+  stored.premiumStartedAt=new Date(stored.premiumStartedAt.getTime()-30*86400000);
+  const unchanged=await accounts.usage(user.id);
+  assert.equal(unchanged.period,first.period);assert.equal(unchanged.voice,1);
+  // A subsequent paid period with a new anchor owns a fresh counter.
+  stored.premiumStartedAt=new Date(Date.now()-86400000);stored.premiumUntil=new Date(stored.premiumStartedAt.getTime()+30*86400000);
+  const renewed=await accounts.usage(user.id);
+  assert.notEqual(renewed.period,first.period);assert.equal(renewed.voice,0);
+  await accounts.consume(user.id,'voice');assert.equal((await accounts.usage(user.id)).voice,1);
+});
+
 const config={production:false,accounts:true,password:'legacy-password',sessionSecret:'test-secret-'.repeat(4),origin:'http://127.0.0.1:5178',mongoUri:'mongodb://unit-test',model:'gemma-test',googleKey:'',sentryDsn:'',elevenKey:'',dailyAiLimit:50};
 async function withAccountServer(fn){
   const users={alice:{id:'alice',name:'Alice',email:'alice@example.com',plan:'free',emailVerified:true},bob:{id:'bob',name:'Bob',email:'bob@example.com',plan:'free',emailVerified:true}};
