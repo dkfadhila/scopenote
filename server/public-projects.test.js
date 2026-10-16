@@ -73,22 +73,36 @@ test('Premium and legacy drafts remain private even if client body requests publ
   assert.deepEqual(await storage.publicList(),[]);
 });
 
-test('public projections omit owner, client, email and history, and deletion removes access',async()=>{
+test('consented Free client names are public while owner, email and history remain private',async()=>{
   const {storage,rows}=storageFixture();
   const saved=await storage.save({...project,email:'private@example.com'},'alice',{plan:'Free',publishConsent:true});
   rows.push({_id:'hidden:old',id:'old',workspace:'hidden',client:'Hidden client',project:'Legacy private',scope:sampleScope,shareId:'1035c426-b494-434e-ae9f-eb940db64ae5'});
   const listing=await storage.publicList();
   assert.equal(listing.length,1);
-  assert.deepEqual(Object.keys(listing[0]).sort(),['project','shareId','summary','updatedAt']);
+  assert.deepEqual(Object.keys(listing[0]).sort(),['client','project','shareId','summary','updatedAt']);
+  assert.equal(listing[0].client,project.client);
   assert.equal(listing[0].summary,sampleScope.summary);
   const detail=await storage.publicGet(saved.shareId);
-  for(const key of ['_id','id','client','workspace','owner','email','history'])assert.equal(detail[key],undefined,`${key} is private metadata`);
+  for(const key of ['_id','id','workspace','owner','email','history','clientPublicationConsentAt'])assert.equal(detail[key],undefined,`${key} is private metadata`);
+  assert.equal(detail.client,project.client);
   assert.equal(detail.brief,project.brief);
   assert.deepEqual(detail.scope,sampleScope);
   assert.equal(await storage.publicGet('1035c426-b494-434e-ae9f-eb940db64ae5'),null,'legacy share-like fields cannot make it public');
   await storage.remove(project.id,'alice');
   assert.deepEqual(await storage.publicList(),[]);
   assert.equal(await storage.publicGet(saved.shareId),null);
+});
+
+test('older public client names remain hidden until renewed publication consent',async()=>{
+  const {storage,rows}=storageFixture();
+  rows.push({...project,_id:`alice:${project.id}`,workspace:'alice',visibility:'public',shareId,revision:1,history:[],publicationConsentAt:'2026-10-01T00:00:00.000Z'});
+  assert.equal((await storage.publicGet(shareId)).client,undefined);
+  assert.equal((await storage.publicList())[0].client,undefined);
+  await assert.rejects(storage.save({...project,revision:1,clientPublicationConsentAt:'spoofed'},'alice',{plan:'Free'}),error=>error.status===400);
+  const saved=await storage.save({...project,revision:1},'alice',{plan:'Free',publishConsent:true});
+  assert(saved.clientPublicationConsentAt);
+  assert.equal((await storage.publicGet(shareId)).client,project.client);
+  assert.equal((await storage.publicList())[0].client,project.client);
 });
 
 test('saving a previously public project under Premium removes anonymous access',async()=>{
