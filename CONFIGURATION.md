@@ -56,3 +56,7 @@ Free dan Premium sama-sama menyediakan ekspor Markdown dan PDF, dengan nama proy
 Sesudah status pembayaran paid, kuitansi diproses melalui receiptOutbox dan Resend memakai key per order. Worker satu menit mengirim ulang pekerjaan tertunda dan kuitansi pembayaran lama yang belum terkirim. Pesan dan penerima disimpan tetap agar retry cocok dengan idempotency key. Retry ambigu setelah 23 jam memerlukan pemeriksaan manual. Tidak ada pengiriman ulang akses Premium. Email verifikasi/reset memakai template HTML dan teks dengan gambar `/email/scopenote-stationery.png`.
 
 Premium dapat memilih Public/Private; default Private. Pilihan berlaku ketika Save. Free baru selalu Public. Public menampilkan client name dan nama author disamarkan (Alexander → A***r), tanpa email akun/owner/history.
+# Scheduled health check
+
+`.github/workflows/health-check.yml` checks the production `/api/health` endpoint every five minutes through GitHub Actions. It requires no credentials or local computer, checks the JSON status, and can also be run manually from Actions. Forks do not ping the production site. This is best-effort: GitHub schedules can be delayed, public-repository schedules stop after 60 days without repository activity, and Render Free can still restart or exhaust its shared instance-hour allowance. Disable the workflow in GitHub Actions when it is no longer needed.
+
