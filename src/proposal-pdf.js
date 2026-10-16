@@ -33,7 +33,7 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
     page.drawText(date,{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(date,9),y:PAGE[1]-57,font:regular,size:9,color:muted});
     page.drawLine({start:{x:MARGIN,y:PAGE[1]-96},end:{x:PAGE[0]-MARGIN,y:PAGE[1]-96},color:rule,thickness:.6});
     // Reserve room for the next line's ascenders below the header rule.
-    y=PAGE[1]-143;
+    y=PAGE[1]-136;
   }
   function ensure(height){if(y-height<BOTTOM)addPage();}
   function wrap(text,font,size,width){
@@ -52,60 +52,83 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
     }
     return lines;
   }
-  function line(text,{font=regular,size=10.5,color=navy,x=MARGIN,leading=15}={}){ensure(leading);if(text)page.drawText(text,{x,y,font,size,color});y-=leading;}
-  function paragraph(text,{font=regular,size=10.5,color=navy,x=MARGIN,width=WIDTH,leading=15,gap=9}={}){
+  function line(text,{font=regular,size=10,color=navy,x=MARGIN,leading=14}={}){ensure(leading);if(text)page.drawText(text,{x,y,font,size,color});y-=leading;}
+  function paragraph(text,{font=regular,size=10,color=navy,x=MARGIN,width=WIDTH,leading=14,gap=7}={}){
     const lines=wrap(text,font,size,width);ensure(Math.min(lines.length,2)*leading);
     for(const textLine of lines)line(textLine,{font,size,color,x,leading});y-=gap;
   }
-  function heading(text){ensure(78);y-=12;line(text,{font:bold,size:13,leading:25});}
+  function heading(text){ensure(62);y-=9;line(text,{font:bold,size:12,leading:22});}
   function listSection(title,items){
-    const groups=items.map(item=>wrap(item,regular,10.5,WIDTH-17));
-    const height=29+groups.reduce((sum,lines)=>sum+lines.length*15+6,0);
+    const groups=items.map(item=>wrap(item,regular,10,WIDTH-17));
+    const height=31+groups.reduce((sum,lines)=>sum+lines.length*14+6,0);
     // Keep compact question/exclusion sections together instead of leaving a
     // final bullet alone on the next page.
     if(height<=320)ensure(height+12);
     heading(title);
     for(const lines of groups){
-      const previous=page;ensure(Math.min(2,lines.length)*15+6);
+      const previous=page;ensure(Math.min(2,lines.length)*14+6);
       if(page!==previous)heading(`${title} (continued)`);
       page.drawText('-',{x:MARGIN,y,font:bold,size:11,color:orange});
       for(const textLine of lines){
-        if(y-15<BOTTOM){addPage();heading(`${title} (continued)`);}
+        if(y-14<BOTTOM){addPage();heading(`${title} (continued)`);}
         line(textLine,{x:MARGIN+17});
       }
       y-=6;
     }
   }
+  function notes(){
+    const sections=[['Questions before we start',work.scope.questions],['Outside this scope',work.scope.exclusions]].filter(([,items])=>items?.length);
+    const columnWidth=(WIDTH-28)/2;
+    const columns=sections.map(([title,items])=>({title,groups:items.map(item=>wrap(item,regular,9.5,columnWidth-13))}));
+    const heights=columns.map(({groups})=>31+groups.reduce((sum,lines)=>sum+lines.length*13+6,0));
+    // Use parallel columns only for short notes. Longer content retains the
+    // full-width, paginated flow with continuation headings.
+    if(columns.length===2&&Math.max(...heights)<=180){
+      ensure(Math.max(...heights)+14);
+      const top=y-9;
+      columns.forEach(({title,groups},index)=>{
+        const x=MARGIN+index*(columnWidth+28);let baseline=top;
+        page.drawText(title,{x,y:baseline,font:bold,size:11,color:navy});baseline-=22;
+        for(const lines of groups){
+          page.drawText('-',{x,y:baseline,font:bold,size:10,color:orange});
+          for(const text of lines){page.drawText(text,{x:x+13,y:baseline,font:regular,size:9.5,color:navy});baseline-=13;}
+          baseline-=6;
+        }
+      });
+      y=top-Math.max(...heights)+9;
+    }else for(const [title,items]of sections)listSection(title,items);
+  }
   addPage();
-  paragraph(clean(work.project)||'Project proposal',{font:bold,size:26,leading:33,gap:3});
-  if(clean(work.client).trim())paragraph(`Prepared for ${clean(work.client)}`,{size:10.5,color:muted,gap:17});
+  paragraph(clean(work.project)||'Project proposal',{font:bold,size:24,leading:28,gap:4});
+  if(clean(work.client).trim())paragraph(`Prepared for ${clean(work.client)}`,{size:10,color:muted,gap:6});
   heading('Overview');paragraph(work.scope.summary);
   heading('Scope of work');
   work.scope.deliverables.forEach((item,index)=>{
-    const titleLines=wrap(item.title,bold,11.2,WIDTH-87),detailLines=wrap(item.detail,regular,10.5,WIDTH-23);
-    ensure(titleLines.length*16+Math.min(detailLines.length,2)*15+10);
+    const titleLines=wrap(item.title,bold,10.5,WIDTH-87),detailLines=wrap(item.detail,regular,10,WIDTH-23);
+    ensure(titleLines.length*15+Math.min(detailLines.length,2)*14+10);
     page.drawText(String(index+1).padStart(2,'0'),{x:MARGIN,y,font:bold,size:10,color:orange});
     const hours=`${Number(item.hours)} h`;
     page.drawText(hours,{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(hours,10),y,font:regular,size:10,color:muted});
-    for(const titleLine of titleLines)line(titleLine,{x:MARGIN+23,font:bold,size:11.2,leading:16});
-    for(const detailLine of detailLines)line(detailLine,{x:MARGIN+23});y-=14;
+    for(const titleLine of titleLines)line(titleLine,{x:MARGIN+23,font:bold,size:10.5,leading:15});
+    for(const detailLine of detailLines)line(detailLine,{x:MARGIN+23});y-=8;
   });
   const {hours,total}=estimate(work.scope.deliverables,Number(work.rate)||0,Number(work.buffer)||0);
   const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:work.currency||'USD',maximumFractionDigits:2}).format(value);
-  // Give commercial terms and open questions a coherent page when the scope
-  // occupies most of the first page, instead of splitting the decision details.
-  if(y<420)addPage();
-  ensure(180);heading('Working estimate');
-  page.drawLine({start:{x:MARGIN,y:y+6},end:{x:PAGE[0]-MARGIN,y:y+6},color:rule,thickness:.6});
-  y-=15;
-  line('Estimated project fee',{size:9,color:muted,leading:31});
-  const fee=money(total),feeSize=Math.min(24,WIDTH/bold.widthOfTextAtSize(fee,1));
-  line(fee,{font:bold,size:feeSize,leading:27,color:orange});
-  paragraph(`${hours} hours at ${money(Number(work.rate)||0)} / hour`,{gap:2});
-  paragraph(`Contingency: ${Number(work.buffer)||0}%`,{color:muted,gap:8});
-  paragraph('This is a working estimate, subject to confirmation.',{size:9,color:muted,leading:13,gap:15});
-  if(work.scope.questions?.length)listSection('Questions before we start',work.scope.questions);
-  if(work.scope.exclusions?.length)listSection('Outside this scope',work.scope.exclusions);
+  ensure(150);heading('Working estimate');
+  const subtotal=hours*(Number(work.rate)||0),contingency=total-subtotal;
+  const amountRow=(label,value)=>{
+    line(label,{size:9.5,color:muted,leading:18});
+    page.drawText(money(value),{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(money(value),10),y:y+18,font:regular,size:10,color:navy});
+  };
+  amountRow(`${hours} hours × ${money(Number(work.rate)||0)} / hour`,subtotal);
+  amountRow(`Contingency (${Number(work.buffer)||0}%)`,contingency);
+  page.drawLine({start:{x:MARGIN,y:y+4},end:{x:PAGE[0]-MARGIN,y:y+4},color:rule,thickness:.6});
+  y-=20;
+  page.drawText('Estimated project fee',{x:MARGIN,y,font:bold,size:10,color:navy});
+  const fee=money(total),feeSize=Math.min(22,(WIDTH*.55)/bold.widthOfTextAtSize(fee,1));
+  page.drawText(fee,{x:PAGE[0]-MARGIN-bold.widthOfTextAtSize(fee,feeSize),y:y-2,font:bold,size:feeSize,color:orange});y-=26;
+  paragraph('This is a working estimate, subject to confirmation.',{size:8.5,color:muted,leading:12,gap:7});
+  notes();
   heading('Next steps');
   paragraph('Confirm the open questions, scope, schedule and payment terms together before work begins. Additional deliverables require a separate estimate.');
   const pages=pdf.getPages();pages.forEach((page,index)=>{

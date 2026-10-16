@@ -33,7 +33,7 @@ function pageData(pdf,page){
 test('proposal PDF preserves accented text, EUR amounts, sections and every page background',async()=>{
   const bytes=await createProposalPdf(work,options);assert(bytes instanceof Uint8Array);
   const pdf=await PDFDocument.load(bytes);assert.equal(pdf.getTitle(),work.project);assert.equal(pdf.getAuthor(),'ScopeNote');
-  assert.equal(pdf.getPageCount(),2);
+  assert.equal(pdf.getPageCount(),1,'a normal four-deliverable proposal fits one readable A4 page');
   const texts=pdf.getPages().map((page,index)=>{
     assert.equal(Math.round(page.getWidth()),595);assert.equal(Math.round(page.getHeight()),842);
     const data=pageData(pdf,page);
@@ -46,7 +46,7 @@ test('proposal PDF preserves accented text, EUR amounts, sections and every page
     }
     return data.text;
   }).join('\n');
-  for(const required of ['Café website proposal','Prepared for José Álvarez','Overview','Scope of work','Working estimate','Questions before we start','Outside this scope','Next steps',sampleScope.summary])assert(texts.replace(/\s+/g,' ').includes(required),`PDF includes ${required}`);
+  for(const required of ['Café website proposal','Prepared for José Álvarez','Overview','Scope of work','Working estimate','Contingency (15%)','€2,730.00','€409.50','Questions before we start','Outside this scope','Next steps',sampleScope.summary])assert(texts.replace(/\s+/g,' ').includes(required),`PDF includes ${required}`);
   const total=estimate(sampleScope.deliverables,65,15).total;
   assert(texts.includes(new Intl.NumberFormat('en-US',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(total)));
   for(const item of sampleScope.deliverables)assert(texts.includes(item.title));
