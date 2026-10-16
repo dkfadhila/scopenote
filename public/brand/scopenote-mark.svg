@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>ScopeNote</title>
+  <rect width="64" height="64" rx="14" fill="#132438"/>
+  <path d="M43 18H27C21 18 18 21 18 26C18 31 22 33 28 33H36C42 33 46 36 46 41C46 46 42 49 36 49H20" stroke="#FFF" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M39 13H51V25H43V21H39V13Z" fill="#D45029"/>
+</svg>

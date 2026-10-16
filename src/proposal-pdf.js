@@ -8,10 +8,10 @@ async function asset(path){const response=await fetch(path);if(!response.ok)thro
 const clean=value=>String(value??'').replace(/\r\n?/g,'\n').replace(/\t/g,'    ').normalize('NFC');
 
 /** Creates a downloadable PDF entirely in the browser; injected bytes allow Node QA. */
-export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,backgroundBytes}={}){
+export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,backgroundBytes,logoBytes}={}){
   if(!work?.scope?.deliverables?.length)throw new Error('Create a scope with at least one deliverable before exporting a PDF.');
-  const [regularBytes,boldBytes,background]=await Promise.all([
-    regularFontBytes??asset('/fonts/Lato-Regular.ttf'),boldFontBytes??asset('/fonts/Lato-Bold.ttf'),backgroundBytes??asset('/pdf/scopenote-background.png')
+  const [regularBytes,boldBytes,background,logo]=await Promise.all([
+    regularFontBytes??asset('/fonts/Lato-Regular.ttf'),boldFontBytes??asset('/fonts/Lato-Bold.ttf'),backgroundBytes??asset('/pdf/scopenote-background.png'),logoBytes??asset('/brand/icon-192.png')
   ]);
   const supported=fontkit.create(regularBytes).characterSet,boldSupported=fontkit.create(boldBytes).characterSet;
   const regularSet=new Set(supported),boldSet=new Set(boldSupported);
@@ -21,14 +21,15 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
   const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit);
   const regular=await pdf.embedFont(regularBytes,{subset:true}),bold=await pdf.embedFont(boldBytes,{subset:true});
   const image=await pdf.embedPng(background);
+  const mark=await pdf.embedPng(logo);
   const now=new Date();pdf.setTitle(clean(work.project)||'Project proposal');pdf.setAuthor('ScopeNote');pdf.setSubject('Freelance project scope and working estimate');pdf.setCreator('ScopeNote');pdf.setCreationDate(now);
   const date=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric'}).format(now);
   let page,y;
   function addPage(){
     page=pdf.addPage(PAGE);page.drawRectangle({x:0,y:0,width:PAGE[0],height:PAGE[1],color:rgb(1,1,1)});
     page.drawImage(image,{x:0,y:0,width:PAGE[0],height:PAGE[1],opacity:.40});
-    page.drawRectangle({x:MARGIN,y:PAGE[1]-58,width:5,height:16,color:orange});
-    page.drawText('scopenote',{x:MARGIN+13,y:PAGE[1]-57,font:bold,size:17,color:navy});
+    page.drawImage(mark,{x:MARGIN,y:PAGE[1]-62,width:26,height:26});
+    page.drawText('scopenote',{x:MARGIN+34,y:PAGE[1]-57,font:bold,size:17,color:navy});
     page.drawText('PROJECT PROPOSAL',{x:MARGIN,y:PAGE[1]-82,font:bold,size:8,color:muted});
     page.drawText(date,{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(date,9),y:PAGE[1]-57,font:regular,size:9,color:muted});
     page.drawLine({start:{x:MARGIN,y:PAGE[1]-96},end:{x:PAGE[0]-MARGIN,y:PAGE[1]-96},color:rule,thickness:.6});

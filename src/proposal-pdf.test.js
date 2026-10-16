@@ -8,7 +8,8 @@ import {sampleScope,estimate} from './domain.js';
 const options={
   regularFontBytes:await readFile(new URL('../public/fonts/Lato-Regular.ttf',import.meta.url)),
   boldFontBytes:await readFile(new URL('../public/fonts/Lato-Bold.ttf',import.meta.url)),
-  backgroundBytes:await readFile(new URL('../public/pdf/scopenote-background.png',import.meta.url))
+  backgroundBytes:await readFile(new URL('../public/pdf/scopenote-background.png',import.meta.url)),
+  logoBytes:await readFile(new URL('../public/brand/icon-192.png',import.meta.url))
 };
 const work={project:'Café website proposal',client:'José Álvarez',scope:sampleScope,rate:65,buffer:15,currency:'EUR'};
 const decode=stream=>new TextDecoder().decode(decodePDFRawStream(stream).decode());

@@ -1874,3 +1874,6 @@ button:disabled{cursor:default;opacity:.55}
 .proposal-brand{display:block;margin-top:20px;font-weight:600;color:var(--ink)}
 .proposal-actions>.form-error{font-size:14px;line-height:1.6;margin:12px 0 18px;color:#9a321b}
 .payment-status{background:var(--soft);padding:24px;margin:28px 0;border-radius:var(--radius);display:grid;gap:14px;line-height:1.7}.payment-status h2{font-size:22px}.payment-status p{font-size:15px;color:var(--secondary)}.payment-status .btn{justify-self:start}.billing-expiry{font-size:15px;line-height:1.7;color:var(--secondary);margin-top:16px}
+
+/* ScopeNote identity: custom monogram shared by navigation and browser icons. */
+.logo-mark{display:block;width:36px;height:36px;flex-shrink:0;object-fit:contain}

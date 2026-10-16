@@ -583,7 +583,7 @@ function App() {
   const auth = ['Sign in', 'Create account', 'Forgot password'].includes(page);
   const editor = ['Brief', 'Review scope', 'Proposal'].includes(page);
   const shown = projects.filter(p => `${p.project} ${p.client}`.toLowerCase().includes(query.toLowerCase()) && (filter === 'All projects' || (filter === 'With a scope' ? !!p.scope : !p.scope)));
-  const logo = <button className="logo" onClick={() => go(user ? 'Projects' : 'Sign in')} aria-label="ScopeNote home"><span className="logo-symbol"><NotePencil size={23} weight="bold" /></span>scopenote<span className="logo-period">.</span></button>;
+  const logo = <button className="logo" onClick={() => go(user ? 'Projects' : 'Sign in')} aria-label="ScopeNote home"><img className="logo-mark" src="/brand/scopenote-mark.svg" width="36" height="36" alt="" />scopenote<span className="logo-period">.</span></button>;
   if (loading) return <div className="loading-screen" role="status"><NotePencil size={30} /><p>Opening your workspace…</p></div>;
   return <MotionConfig reducedMotion="user">
     {auth ? <div className="auth-layout"><section className="auth-main">{logo}<button className="back-link" onClick={() => {
