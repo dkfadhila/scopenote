@@ -26,7 +26,7 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
   let page,y;
   function addPage(){
     page=pdf.addPage(PAGE);page.drawRectangle({x:0,y:0,width:PAGE[0],height:PAGE[1],color:rgb(1,1,1)});
-    page.drawImage(image,{x:0,y:0,width:PAGE[0],height:PAGE[1],opacity:.12});
+    page.drawImage(image,{x:0,y:0,width:PAGE[0],height:PAGE[1],opacity:.40});
     page.drawRectangle({x:MARGIN,y:PAGE[1]-58,width:5,height:16,color:orange});
     page.drawText('scopenote',{x:MARGIN+13,y:PAGE[1]-57,font:bold,size:17,color:navy});
     page.drawText('PROJECT PROPOSAL',{x:MARGIN,y:PAGE[1]-82,font:bold,size:8,color:muted});
