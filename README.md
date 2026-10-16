@@ -61,9 +61,9 @@ The Blueprint uses a free web-service plan as a starting configuration. This is 
 ## Product behavior
 
 - Full scope editing: overview, deliverable titles/details/hours, clarification questions and exclusions.
-- Deterministic rate/currency/contingency arithmetic, Markdown and PDF proposal export on both plans. Exports include project name, client name when available, full scope, estimate and “Made with ScopeNote”. PDF generation runs locally in the browser and loads only when requested. Public exports include the client name only when the server has recorded explicit client-name publication consent. They never fetch private owner metadata.
+- Deterministic rate/currency/contingency arithmetic, Markdown and PDF proposal export on both plans. Exports include project name, client name when available, full scope, estimate and “Made with ScopeNote”. PDF generation runs locally in the browser and loads only when requested. Public exports include the client name returned by the public API after the owner saves the public draft. They never fetch private owner metadata.
 - Voice import: MP3, WAV, M4A, OGG or WebM; up to 12 MB. The transcript replaces the brief only after confirmation. Review transcription before generating a scope.
-- Free client names, drafts and their complete scopes are public after explicit publication consent. Premium drafts/scopes are private. Existing private records stay private; saving does not silently publish them.
+- Free client names, drafts and their complete scopes are public by default when saved; no publication modal or checkbox is required. Premium drafts/scopes are private. Existing private records stay private; saving does not silently publish them.
 - Server drafts when MongoDB is configured; failed cloud saves are reported, not silently downgraded to browser storage.
 - MongoDB compare-and-swap revisions prevent silent concurrent overwrites. History and restore are available in the UI and at `/api/projects/:id/history`.
 - Manual saving: edits are not automatically persisted. Switching projects may discard unsaved edits.
@@ -86,7 +86,7 @@ npm run build
 
 Tests cover auth, cross-origin rejection, request validation, project route contracts using injected storage, upload MIME checking, missing-key errors, schema rejection, estimate arithmetic, and an actual Mastra workflow using stub model responses. These tests do not prove remote provider availability or live Atlas/Sentry behavior.
 
-The earlier UI scripts target the retired workspace UI. Browser QA covers real account and public-draft flows, disabled Premium, publication consent and honest reset errors. `node scripts/account-integration.mjs` tests two synthetic accounts against a local isolated QA API; 36 assertions cover tenant isolation, revision conflicts, anonymous rejection and logout revocation.
+The earlier UI scripts target the retired workspace UI. Browser QA covers real account and public-draft flows, disabled Premium, public-by-default Free saves and honest reset errors. `node scripts/account-integration.mjs` tests two synthetic accounts against a local isolated QA API; 36 assertions cover tenant isolation, revision conflicts, anonymous rejection and logout revocation.
 
 Dependency audit currently reports five moderate transitive findings through Mastra -> gray-matter -> js-yaml -> argparse -> sprintf-js. No high/critical findings were reported. The published sprintf-js version has no fixed release; we did not force an unrelated Mastra downgrade. ScopeNote does not expose a YAML/frontmatter-processing endpoint. Review the upstream advisory before production use.
 
@@ -104,7 +104,7 @@ React + Vite, Motion, Phosphor Icons, DM Sans and Instrument Serif; typography i
 
 Source repository: https://github.com/dkfadhila/scopenote
 
-Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The account mode stores projects in Atlas. Free projects explicitly consented for publication appear in the public gallery. Premium and older private records remain private. Publishing MIT source does not grant access to private database records.
+Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The account mode stores projects in Atlas. New Free projects appear in the public gallery when saved. Premium and older private records remain private. Publishing MIT source does not grant access to private database records.
 
 ## Community Wisdom
 
@@ -116,20 +116,20 @@ Commercial launch still needs payment integration, cost validation and an indepe
 
 | Plan | Drafts and scopes | Voice | Billing |
 | --- | --- | --- | --- |
-| Free | Client name, draft and scope public; author must explicitly consent to publication | 1 transcription/month | Free |
+| Free | Client name, draft and scope public by default when saved | 1 transcription/month | Free |
 | Premium | Private to the account | Proposed 10 voice imports/month, each up to 12 MB | Proposed US$1/month; coming soon |
 
-Free retains 3 AI scope attempts/month and 5 saved projects. Public pages include the project title, client name, brief, full scope, deliverables, hours, questions, exclusions and estimate after explicit publication consent. Account email, owner identifier and revision history are omitted; authors must still remove confidential information from the text itself. Edits become public when the owner saves them. Deleting the source project removes its public listing; copies already taken elsewhere cannot be recalled. No anonymous edit API is provided. Premium cannot currently be bought or activated from the browser.
+Free retains 3 AI scope attempts/month and 5 saved projects. Public pages include the project title, client name, brief, full scope, deliverables, hours, questions, exclusions and estimate when saved. Account email, owner identifier and revision history are omitted; authors must still remove confidential information from the text itself. Edits become public when the owner saves them. Deleting the source project removes its public listing; copies already taken elsewhere cannot be recalled. No anonymous edit API is provided. Premium cannot currently be bought or activated from the browser.
 
 The former standalone design draft and sample demo have been removed. [Follow @tirtavex on X](https://x.com/tirtavex).
 
-Publication checks were informed by [Public sharing as a snapshot, not a live editor](https://dev.to/julian_tao_82353720ba9ff5/public-sharing-as-a-snapshot-not-a-live-editor-3gmh), by [Julian Tao](https://dev.to/julian_tao_82353720ba9ff5): separate public identifiers, explicit consent and restricted public fields. ScopeNote publishes the latest explicit save rather than a separate snapshot; there were no comments on the retrieved article.
+Publication checks were informed by [Public sharing as a snapshot, not a live editor](https://dev.to/julian_tao_82353720ba9ff5/public-sharing-as-a-snapshot-not-a-live-editor-3gmh), by [Julian Tao](https://dev.to/julian_tao_82353720ba9ff5): separate public identifiers and restricted public fields. ScopeNote publishes the latest explicit save rather than a separate snapshot; there were no comments on the retrieved article.
 
 ## PDF template
 
-Both plans include Markdown and PDF export. The A4 PDF is created entirely in the browser using pdf-lib and embedded Lato fonts, with a generated transparent stationery background, project/client details, scope, estimates, clarification questions, exclusions, page numbers and Made with ScopeNote credit. Assets are self-hosted; document content is not sent to a PDF service. The PDF module is loaded only when requested. Unsupported characters fail explicitly rather than disappearing; Markdown remains available. Public exports use the client name returned by the public API only after stored publication consent; older hidden names are not fetched from private APIs.
+Both plans include Markdown and PDF export. The A4 PDF is created entirely in the browser using pdf-lib and embedded Lato fonts, with a generated transparent stationery background, project/client details, scope, estimates, clarification questions, exclusions, page numbers and Made with ScopeNote credit. Assets are self-hosted; document content is not sent to a PDF service. The PDF module is loaded only when requested. Unsupported characters fail explicitly rather than disappearing; Markdown remains available. Public exports use the client name returned by the public API; older hidden names are not fetched from private APIs.
 
 Lato is distributed under the included SIL Open Font License. The transparent background was generated with OpenAI image generation for this project. PDF layout QA renders the actual exported file with Poppler. The regression approach was informed by [A PDF preview is a rendering contract](https://dev.to/dev_truth_f4c8f876c/a-pdf-preview-is-a-rendering-contract-lessons-from-a-japanese-worksheet-tool-hbp), by [dev_truth](https://dev.to/dev_truth_f4c8f876c): check exported fonts, geometry, complete content and pagination, not just the browser preview. No comments were present on the retrieved article.
 
 
-Existing public drafts require renewed consent before publishing the previously hidden client name on a subsequent save. The server stores `clientPublicationConsentAt` and includes a client name in public listing/detail responses only when that consent exists. Older public drafts keep client names hidden until consent is recorded; existing private drafts remain private. Publishing client data requires the author’s permission to share it.
+Free drafts publish their client name, brief, full scope and estimate on save with a visible notice before saving. Older public client names become public on the owner’s next save. The server tracks `clientNamePublishedAt` for public client-name visibility and supports existing publication markers for compatibility. Existing private drafts remain private. Authors must only save client information they have permission to publish.
