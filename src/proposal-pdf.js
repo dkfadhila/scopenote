@@ -32,7 +32,8 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
     page.drawText('PROJECT PROPOSAL',{x:MARGIN,y:PAGE[1]-82,font:bold,size:8,color:muted});
     page.drawText(date,{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(date,9),y:PAGE[1]-57,font:regular,size:9,color:muted});
     page.drawLine({start:{x:MARGIN,y:PAGE[1]-96},end:{x:PAGE[0]-MARGIN,y:PAGE[1]-96},color:rule,thickness:.6});
-    y=PAGE[1]-121;
+    // Reserve room for the next line's ascenders below the header rule.
+    y=PAGE[1]-143;
   }
   function ensure(height){if(y-height<BOTTOM)addPage();}
   function wrap(text,font,size,width){
@@ -56,7 +57,7 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
     const lines=wrap(text,font,size,width);ensure(Math.min(lines.length,2)*leading);
     for(const textLine of lines)line(textLine,{font,size,color,x,leading});y-=gap;
   }
-  function heading(text){ensure(70);y-=7;line(text,{font:bold,size:13,leading:22});}
+  function heading(text){ensure(78);y-=12;line(text,{font:bold,size:13,leading:25});}
   function listSection(title,items){
     const groups=items.map(item=>wrap(item,regular,10.5,WIDTH-17));
     const height=29+groups.reduce((sum,lines)=>sum+lines.length*15+6,0);
@@ -76,27 +77,33 @@ export async function createProposalPdf(work,{regularFontBytes,boldFontBytes,bac
     }
   }
   addPage();
-  paragraph(clean(work.project)||'Project proposal',{font:bold,size:28,leading:34,gap:11});
-  if(clean(work.client).trim())paragraph(`Prepared for ${clean(work.client)}`,{size:11,color:muted,gap:15});
+  paragraph(clean(work.project)||'Project proposal',{font:bold,size:26,leading:33,gap:3});
+  if(clean(work.client).trim())paragraph(`Prepared for ${clean(work.client)}`,{size:10.5,color:muted,gap:17});
   heading('Overview');paragraph(work.scope.summary);
   heading('Scope of work');
   work.scope.deliverables.forEach((item,index)=>{
-    const titleLines=wrap(item.title,bold,11.2,WIDTH-87),detailLines=wrap(item.detail,regular,10.5,WIDTH-20);
+    const titleLines=wrap(item.title,bold,11.2,WIDTH-87),detailLines=wrap(item.detail,regular,10.5,WIDTH-23);
     ensure(titleLines.length*16+Math.min(detailLines.length,2)*15+10);
     page.drawText(String(index+1).padStart(2,'0'),{x:MARGIN,y,font:bold,size:10,color:orange});
     const hours=`${Number(item.hours)} h`;
     page.drawText(hours,{x:PAGE[0]-MARGIN-regular.widthOfTextAtSize(hours,10),y,font:regular,size:10,color:muted});
     for(const titleLine of titleLines)line(titleLine,{x:MARGIN+23,font:bold,size:11.2,leading:16});
-    for(const detailLine of detailLines)line(detailLine,{x:MARGIN+20});y-=12;
+    for(const detailLine of detailLines)line(detailLine,{x:MARGIN+23});y-=14;
   });
   const {hours,total}=estimate(work.scope.deliverables,Number(work.rate)||0,Number(work.buffer)||0);
   const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:work.currency||'USD',maximumFractionDigits:2}).format(value);
-  ensure(145);heading('Working estimate');
-  paragraph(`${hours} hours at ${money(Number(work.rate)||0)} / hour`,{gap:3});
-  paragraph(`Contingency: ${Number(work.buffer)||0}%`,{color:muted,gap:6});
+  // Give commercial terms and open questions a coherent page when the scope
+  // occupies most of the first page, instead of splitting the decision details.
+  if(y<420)addPage();
+  ensure(180);heading('Working estimate');
+  page.drawLine({start:{x:MARGIN,y:y+6},end:{x:PAGE[0]-MARGIN,y:y+6},color:rule,thickness:.6});
+  y-=15;
+  line('Estimated project fee',{size:9,color:muted,leading:31});
   const fee=money(total),feeSize=Math.min(24,WIDTH/bold.widthOfTextAtSize(fee,1));
-  line(fee,{font:bold,size:feeSize,leading:32,color:orange});
-  paragraph('This is a working estimate, subject to confirmation.',{size:9,color:muted,leading:13,gap:12});
+  line(fee,{font:bold,size:feeSize,leading:27,color:orange});
+  paragraph(`${hours} hours at ${money(Number(work.rate)||0)} / hour`,{gap:2});
+  paragraph(`Contingency: ${Number(work.buffer)||0}%`,{color:muted,gap:8});
+  paragraph('This is a working estimate, subject to confirmation.',{size:9,color:muted,leading:13,gap:15});
   if(work.scope.questions?.length)listSection('Questions before we start',work.scope.questions);
   if(work.scope.exclusions?.length)listSection('Outside this scope',work.scope.exclusions);
   heading('Next steps');
