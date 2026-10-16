@@ -67,7 +67,7 @@ export function createBilling(config,storage,{request:injectedRequest,now=()=>ne
       catch(error){await orders.updateOne({_id:order._id},{$set:{status:'setup_failed'}});throw error;}
       if(!validId(intent?.allscale_checkout_intent_id))throw fail(503,'The payment provider returned an invalid checkout.');
       let url;try{url=new URL(intent.checkout_url);}catch{throw fail(503,'The payment provider returned an invalid checkout.');}
-      const hostedCheckout=url.hostname==='checkout.allscale.io'||(url.hostname==='app.allscale.io'&&/^\/pay\/checkout\/[a-zA-Z0-9_-]+\/?$/.test(url.pathname));
+      const hostedCheckout=url.hostname==='checkout.allscale.io'||(url.hostname==='app.allscale.io'&&/^\/pay\/checkout\/[a-zA-Z0-9_=-]{1,1024}\/?$/.test(url.pathname));
       if(url.protocol!=='https:'||!hostedCheckout||url.port||url.username||url.password)throw fail(503,'The payment provider returned an invalid checkout.');
       await orders.updateOne({_id:order._id},{$set:{intentId:intent.allscale_checkout_intent_id,status:'pending'}});
       return {orderId:order._id,checkoutUrl:url.href};

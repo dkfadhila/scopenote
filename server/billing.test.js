@@ -153,7 +153,7 @@ test('disabled checkout fails closed and provider checkout URLs must be on the e
     const f=fixture(),billing=createBilling(config,f.storage,{request:async()=>({allscale_checkout_intent_id:'intent-unit',checkout_url:url})});
     await assert.rejects(billing.checkout({id:'alice'}),error=>error.status===503);
   }
-  const actual=fixture(),liveHost=createBilling(config,actual.storage,{request:async()=>({allscale_checkout_intent_id:'intent-live-host',checkout_url:'https://app.allscale.io/pay/checkout/intent-live-host'})});
+  const actual=fixture(),liveHost=createBilling(config,actual.storage,{request:async()=>({allscale_checkout_intent_id:'intent-live-host',checkout_url:'https://app.allscale.io/pay/checkout/U0ov8Moj1CepoiaIdL5ewnT-2S5LGMomyt0nnYLGnFEsMsC4Iyb3_sNiFb8VVyDMMjvkuA=='})});
   assert.equal(new URL((await liveHost.checkout({id:'alice'})).checkoutUrl).hostname,'app.allscale.io');
 });
 
