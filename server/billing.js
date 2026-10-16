@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {createReceipts} from './receipts.js';
 import {createAllscaleClient,verifyAllscaleWebhook} from './allscale.js';
 
 const PRICE=100,DAYS=30;
@@ -10,6 +11,8 @@ export function createBilling(config,storage,{request:injectedRequest,now=()=>ne
   const credentials={apiKey:config.allscaleKey,apiSecret:config.allscaleSecret};
   const enabled=!!(config.accounts&&config.allscaleEnabled&&credentials.apiKey&&credentials.apiSecret&&config.origin);
   const request=injectedRequest||createAllscaleClient(credentials);
+  const receipts=createReceipts(config,storage,{now});
+  const emailReceipt=async id=>{try{await receipts.deliver(id);}catch{/* durable paid order is retried by the worker */}};
   let initialized;
   async function db(){
     const database=await storage.database();
@@ -27,7 +30,7 @@ export function createBilling(config,storage,{request:injectedRequest,now=()=>ne
   }
   async function reconcile(order,webhook){
     const database=await db(),orders=database.collection('billingOrders');
-    if(order.status==='paid')return view(order);
+    if(order.status==='paid'){await emailReceipt(order._id);return view(order);}
     if(!order.intentId)return view(order);
     const detail=await request('GET',`/v1/checkout_intents/${order.intentId}`);
     // Only the authoritative server-to-server status can grant access.
@@ -51,10 +54,13 @@ export function createBilling(config,storage,{request:injectedRequest,now=()=>ne
     if(!user)user=await users.findOne({_id:order.userId,allscalePaidOrders:order._id});
     if(!user)throw fail(409,'The payment account could not be found. Please contact support.');
     const changes={status:'paid',premiumUntil:user.premiumUntil,paidAt:time,providerStatus:20,...(webhook?.all_scale_transaction_id?{transactionId:webhook.all_scale_transaction_id}:{})};
+    changes.paymentCoin=detail.coin_symbol||null;changes.paymentAmount=detail.actual_paid_amount||detail.amount_coins||null;
     await orders.updateOne({_id:order._id},{$set:changes});
+    await emailReceipt(order._id);
     return view({...order,...changes});
   }
   return {
+    retryReceipts:receipts.retry,
     info(user){return {enabled,provider:'allscale',kind:'prepaid',priceCents:PRICE,currency:'USD',days:DAYS,premiumUntil:user?.premiumUntil||null};},
     async checkout(user){
       requireEnabled();

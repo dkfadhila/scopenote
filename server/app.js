@@ -14,6 +14,7 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
   const app=express();app.disable('x-powered-by');if(config.production)app.set('trust proxy',1);
   const accounts=providedAccounts||(config.accounts?createAccounts(config,storage):null);
   const billing=providedBilling||createBilling(config,storage);
+  app.locals.billing=billing;
   const tokenFrom=req=>req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith('scopenote_account='))?.slice('scopenote_account='.length);
   const cookieOptions={httpOnly:true,secure:config.production,sameSite:'strict',maxAge:7*86400000,path:'/'};
   app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');if(config.production){res.setHeader('Strict-Transport-Security','max-age=31536000');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");}next();});

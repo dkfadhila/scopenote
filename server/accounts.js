@@ -1,6 +1,7 @@
 import {createHash,randomBytes,randomUUID,scrypt,timingSafeEqual} from 'node:crypto';
 import {promisify} from 'node:util';
 import {z} from 'zod';
+import {accountEmail,deliverEmail} from './emails.js';
 
 const derive=promisify(scrypt);
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -31,12 +32,7 @@ export function createAccounts(config,storage,{sendMail}={}){
     await initialized;return d;
   }
   const mailReady=()=>!!sendMail||!!(config.resendKey&&config.emailFrom);
-  async function mail(to,subject,text){
-    if(sendMail)return sendMail({to,subject,text});
-    if(!mailReady())throw error(503,'Password reset email is not enabled yet. Please contact the site owner.');
-    const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${config.resendKey}`,'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:JSON.stringify({from:config.emailFrom,to:[to],subject,text}),signal:AbortSignal.timeout(15000)});
-    if(!r.ok)throw error(503,'Email delivery is temporarily unavailable. Please try again later.');
-  }
+  async function mail(to,kind,details){return deliverEmail(config,{to,...accountEmail(config,kind,details),idempotencyKey:randomUUID()},{sendMail});}
   function credentials(input,registration=false){
     const schema=z.object({email:emailSchema,password:passwordSchema,...(registration?{name:z.string().trim().min(1).max(80)}:{})});
     const parsed=schema.safeParse(input);if(!parsed.success)throw error(400,'Enter a valid email and a password between 10 and 128 characters.');return parsed.data;
@@ -87,7 +83,7 @@ export function createAccounts(config,storage,{sendMail}={}){
       const parsed=emailSchema.safeParse(email);if(!parsed.success)throw error(400,'Enter a valid email address.');
       if(!mailReady())throw error(503,'Password reset email is not enabled yet. Please contact the site owner.');
       const users=(await db()).collection('users'),u=await users.findOne({email:parsed.data});
-      if(u){const token=randomBytes(32).toString('hex');await users.updateOne({_id:u._id},{$set:{resetHash:hash(token),resetExpires:new Date(Date.now()+15*60000)}});await mail(u.email,'Reset your ScopeNote password',`Use this link to choose a new password. It expires in 15 minutes and can only be used once.\n\n${config.origin}/#reset=${token}\n\nIf you did not request this, ignore this email.`);}
+      if(u){const token=randomBytes(32).toString('hex');await users.updateOne({_id:u._id},{$set:{resetHash:hash(token),resetExpires:new Date(Date.now()+15*60000)}});await mail(u.email,'reset',{name:u.name,url:`${config.origin}/#reset=${token}`});}
       return {message:'If an account exists for this email, a reset link will arrive shortly.'};
     },
     async resetPassword(token,password){
@@ -102,7 +98,7 @@ export function createAccounts(config,storage,{sendMail}={}){
       if(!mailReady())throw error(503,'Email verification is not enabled yet.');
       if(user.emailVerified)return {ok:true};const token=randomBytes(32).toString('hex');
       await(await db()).collection('users').updateOne({_id:user.id},{$set:{verifyHash:hash(token),verifyExpires:new Date(Date.now()+86400000)}});
-      await mail(user.email,'Verify your ScopeNote email',`Confirm your email address using this link. It expires in 24 hours.\n\n${config.origin}/#verify=${token}`);return {ok:true};
+      await mail(user.email,'verify',{name:user.name,url:`${config.origin}/#verify=${token}`});return {ok:true};
     },
     async verifyEmail(token){
       if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))throw error(400,'Invalid email verification link.');

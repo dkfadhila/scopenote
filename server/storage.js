@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb';
 import { randomUUID } from 'node:crypto';
+export function maskAuthor(name){const chars=[...String(name||'').trim().split(/\s+/)[0]];return chars.length?chars[0]+'***'+(chars.length>1?chars.at(-1):''):'Anonymous';}
 export function createStorage(config,{client:providedClient}={}) {
   let client, connecting;
   async function collection(){
@@ -11,11 +12,21 @@ export function createStorage(config,{client:providedClient}={}) {
     async database(){await collection();return client.db(config.mongoDb);},
     async ping(){await collection();await client.db(config.mongoDb).command({ping:1});},
     async list(owner='owner'){return (await collection()).find({workspace:owner},{projection:{_id:0,workspace:0,history:0}}).sort({updatedAt:-1}).limit(100).toArray();},
-    async publicList(){const rows=await(await collection()).find({visibility:'public'},{projection:{_id:0,shareId:1,project:1,client:1,clientNamePublishedAt:1,clientPublicationConsentAt:1,'scope.summary':1,updatedAt:1}}).sort({updatedAt:-1}).limit(100).toArray();return rows.map(p=>({shareId:p.shareId,project:p.project,...(p.clientNamePublishedAt||p.clientPublicationConsentAt?{client:p.client}:{}),summary:p.scope?.summary||'',updatedAt:p.updatedAt}));},
-    async publicGet(shareId){const row=await(await collection()).findOne({shareId,visibility:'public'},{projection:{_id:0,shareId:1,project:1,client:1,clientNamePublishedAt:1,clientPublicationConsentAt:1,brief:1,scope:1,rate:1,buffer:1,currency:1,updatedAt:1,visibility:1}});if(!row)return null;const {project,brief,scope,rate,buffer,currency,updatedAt,visibility}=row;return {shareId,project,...(row.clientNamePublishedAt||row.clientPublicationConsentAt?{client:row.client}:{}),brief,scope,rate,buffer,currency,updatedAt,visibility};},
+    async publicList(){
+      const rows=await(await collection()).find({visibility:'public'},{projection:{_id:0,shareId:1,project:1,client:1,workspace:1,'scope.summary':1,updatedAt:1}}).sort({updatedAt:-1}).limit(100).toArray();
+      const users=client.db(config.mongoDb).collection('users');
+      return Promise.all(rows.map(async p=>{const author=await users.findOne({_id:p.workspace},{projection:{name:1}});return {shareId:p.shareId,project:p.project,client:p.client,author:maskAuthor(author?.name),summary:p.scope?.summary||'',updatedAt:p.updatedAt};}));
+    },
+    async publicGet(shareId){
+      const row=await(await collection()).findOne({shareId,visibility:'public'},{projection:{_id:0,shareId:1,project:1,client:1,workspace:1,brief:1,scope:1,rate:1,buffer:1,currency:1,updatedAt:1,visibility:1}});
+      if(!row)return null;
+      const user=await client.db(config.mongoDb).collection('users').findOne({_id:row.workspace},{projection:{name:1}});
+      const {project,client:clientName,brief,scope,rate,buffer,currency,updatedAt,visibility}=row;
+      return {shareId,project,client:clientName,author:maskAuthor(user?.name),brief,scope,rate,buffer,currency,updatedAt,visibility};
+    },
     async save(project,owner='owner',{plan='Free'}={}){
       const col=await collection(),key=owner==='owner'?project.id:`${owner}:${project.id}`,previous=await col.findOne({_id:key,workspace:owner});
-      const visibility=plan==='Premium'?'private':previous?.visibility||(previous||owner==='owner'?'private':'public');
+      const visibility=plan==='Premium'?(project.visibility==='public'?'public':'private'):previous?.visibility||(previous||owner==='owner'?'private':'public');
       if(!previous&&owner!=='owner'&&await col.countDocuments({workspace:owner})>=5){const error=new Error('Free accounts can save up to 5 projects. Export or remove a draft to make room.');error.status=429;throw error;}
       if(previous&&project.revision!==previous.revision){const error=new Error('This draft changed elsewhere. Reload saved drafts before saving again.');error.status=409;throw error;}
       const {revision,clientPublicationConsentAt:ignoredClientConsent,clientNamePublishedAt:ignoredPublishedAt,...fields}=project;

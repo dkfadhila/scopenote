@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createApp} from './app.js';
-import {createStorage} from './storage.js';
+import {createStorage,maskAuthor} from './storage.js';
 import {sampleScope} from '../src/domain.js';
 
 const shareId='0fc82342-3047-4902-b5fb-c7a77c093eb9';
@@ -47,8 +47,10 @@ function storageFixture(){
     async replaceOne(query,row){const index=rows.findIndex(item=>match(item,query));if(index===-1)return {matchedCount:0};rows[index]=copy(row);return {matchedCount:1};},
     async deleteOne(query){const index=rows.findIndex(item=>match(item,query));if(index===-1)return {deletedCount:0};rows.splice(index,1);return {deletedCount:1};}
   };
-  const client={async connect(){return client;},db:()=>({collection:()=>collection}),async close(){}};
-  return {rows,storage:createStorage(config,{client})};
+  const users=[];
+  const userCollection={async findOne(query){return copy(users.find(user=>match(user,query)))||null;}};
+  const client={async connect(){return client;},db:()=>({collection:name=>name==='users'?userCollection:collection}),async close(){}};
+  return {rows,users,storage:createStorage(config,{client})};
 }
 
 test('new Free draft publishes directly on save and server assigns its public share ID',async()=>{
@@ -62,9 +64,9 @@ test('new Free draft publishes directly on save and server assigns its public sh
   assert.equal(updated.visibility,'public');
 });
 
-test('Premium and legacy drafts remain private even if client body requests public',async()=>{
+test('Premium defaults private and legacy Free drafts remain private',async()=>{
   const {storage,rows}=storageFixture();
-  const premium=await storage.save({...project,visibility:'public'},'paid-user',{plan:'Premium'});
+  const premium=await storage.save({...project},'paid-user',{plan:'Premium'});
   assert.equal(premium.visibility,'private');
   rows.push({...project,_id:'legacy-user:legacy',id:'legacy',workspace:'legacy-user',revision:1,history:[]});
   const updated=await storage.save({...project,id:'legacy',revision:1},'legacy-user',{plan:'Free'});
@@ -73,17 +75,22 @@ test('Premium and legacy drafts remain private even if client body requests publ
 });
 
 test('saved Free client names are public while owner, email and history remain private',async()=>{
-  const {storage,rows}=storageFixture();
+  const {storage,rows,users}=storageFixture();
+  users.push({_id:'alice',name:'Alexander Smith',email:'alice@example.com'});
   const saved=await storage.save({...project,email:'private@example.com'},'alice',{plan:'Free'});
   rows.push({_id:'hidden:old',id:'old',workspace:'hidden',client:'Hidden client',project:'Legacy private',scope:sampleScope,shareId:'1035c426-b494-434e-ae9f-eb940db64ae5'});
   const listing=await storage.publicList();
   assert.equal(listing.length,1);
-  assert.deepEqual(Object.keys(listing[0]).sort(),['client','project','shareId','summary','updatedAt']);
+  assert.deepEqual(Object.keys(listing[0]).sort(),['author','client','project','shareId','summary','updatedAt']);
   assert.equal(listing[0].client,project.client);
+  assert.equal(listing[0].author,'A***r');
   assert.equal(listing[0].summary,sampleScope.summary);
   const detail=await storage.publicGet(saved.shareId);
   for(const key of ['_id','id','workspace','owner','email','history','clientPublicationConsentAt','clientNamePublishedAt'])assert.equal(detail[key],undefined,`${key} is private metadata`);
   assert.equal(detail.client,project.client);
+  assert.equal(detail.author,'A***r');
+  assert(!JSON.stringify(detail).includes('Alexander Smith'));
+  assert(!JSON.stringify(detail).includes('alice@example.com'));
   assert.equal(detail.brief,project.brief);
   assert.deepEqual(detail.scope,sampleScope);
   assert.equal(await storage.publicGet('1035c426-b494-434e-ae9f-eb940db64ae5'),null,'legacy share-like fields cannot make it public');
@@ -92,11 +99,11 @@ test('saved Free client names are public while owner, email and history remain p
   assert.equal(await storage.publicGet(saved.shareId),null);
 });
 
-test('older hidden client names publish on the next owner save without a confirmation flag',async()=>{
+test('all explicitly public drafts include the client name without another save',async()=>{
   const {storage,rows}=storageFixture();
   rows.push({...project,_id:`alice:${project.id}`,workspace:'alice',visibility:'public',shareId,revision:1,history:[],publicationConsentAt:'2026-10-01T00:00:00.000Z'});
-  assert.equal((await storage.publicGet(shareId)).client,undefined);
-  assert.equal((await storage.publicList())[0].client,undefined);
+  assert.equal((await storage.publicGet(shareId)).client,project.client);
+  assert.equal((await storage.publicList())[0].client,project.client);
   const saved=await storage.save({...project,revision:1},'alice',{plan:'Free'});
   assert(saved.clientNamePublishedAt);
   assert.equal(saved.clientPublicationConsentAt,undefined);
@@ -131,7 +138,7 @@ test('save routes derive plan and owner from session without any publication con
     assert.equal(calls[0][1],'alice');
     assert.deepEqual(calls[0][2],{plan:'Free'});
     assert.equal(calls[0][0].plan,undefined);
-    assert.equal(calls[0][0].visibility,undefined);
+    assert.equal(calls[0][0].visibility,'private','visibility is validated but effective plan still comes from session');
     assert.equal(calls[0][0].shareId,undefined);
     const noConsent=await request(`/api/projects/${project.id}`,{cookie:'alice',body:{...project,publishConsent:'true'}});
     assert.equal(noConsent.status,200);
@@ -149,4 +156,20 @@ test('expired Premium cannot silently publish a new draft requested as private',
     assert.equal(existing.status,200,'existing private drafts remain editable on expiry');
     assert.equal(writes,1);
   });
+});
+
+
+test('Premium can publish and make a draft private again; Free cannot make a new draft private',async()=>{
+ const {storage}=storageFixture();
+ const first=await storage.save(project,'paid-user',{plan:'Premium'});assert.equal(first.visibility,'private');
+ const shared=await storage.save({...project,revision:1,visibility:'public'},'paid-user',{plan:'Premium'});
+ assert.equal(shared.visibility,'public');assert.equal((await storage.publicGet(shared.shareId)).client,project.client);
+ const privateAgain=await storage.save({...project,revision:2,visibility:'private'},'paid-user',{plan:'Premium'});
+ assert.equal(privateAgain.visibility,'private');assert.equal(await storage.publicGet(shared.shareId),null);
+ const free=await storage.save({...project,visibility:'private'},'free-user',{plan:'Free'});assert.equal(free.visibility,'public');
+});
+
+test('public author labels mask the first display name without exposing email or full name',()=>{
+ assert.equal(maskAuthor('Alexander'),'A***r');assert.equal(maskAuthor('Alexander Smith'),'A***r');
+ assert.equal(maskAuthor('A'),'A***');assert.equal(maskAuthor('Élodie'),'É***e');assert.equal(maskAuthor(''),'Anonymous');
 });

@@ -104,7 +104,7 @@ React + Vite, Motion, Phosphor Icons, DM Sans and Instrument Serif; typography i
 
 Source repository: https://github.com/dkfadhila/scopenote
 
-Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The account mode stores projects in Atlas. New Free projects appear in the public gallery when saved. Premium and older private records remain private. Publishing MIT source does not grant access to private database records.
+Live application: https://scopenote.dktirta.tech. Render serves the frontend and API; Cloudflare DNS points the subdomain to `scopenote.onrender.com`. The custom domain is verified and Render has issued its certificate. The account mode stores projects in Atlas. New Free projects appear in the public gallery when saved. Premium drafts are private by default, with optional public sharing. Older private records remain private. Publishing MIT source does not grant access to private database records.
 
 ## Community Wisdom
 
@@ -117,7 +117,7 @@ Commercial launch still needs live payment verification, cost validation and an 
 | Plan | Drafts and scopes | Voice | Billing |
 | --- | --- | --- | --- |
 | Free | Client name, draft and scope public by default when saved | 1 transcription/month | Free |
-| Premium | Private to the account, including after expiry | 10 voice imports per 30-day access period, each up to 12 MB | US$1 once for 30 days; no automatic renewal |
+| Premium | Private by default; optional Public sharing; private drafts stay private after expiry | 10 voice imports per 30-day access period, each up to 12 MB | US$1 once for 30 days; no automatic renewal |
 
 Free retains 3 AI scope attempts/month and 5 saved projects. Public pages include the project title, client name, brief, full scope, deliverables, hours, questions, exclusions and estimate when saved. Account email, owner identifier and revision history are omitted; authors must still remove confidential information from the text itself. Edits become public when the owner saves them. Deleting the source project removes its public listing; copies already taken elsewhere cannot be recalled. No anonymous edit API is provided. Premium checkout is available only when AllScale is configured and explicitly enabled on the server. Both plans retain 3 AI scopes and 5 saved projects; Premium AI quotas use anchored 30-day periods. Existing private projects remain private after expiry.
 
@@ -132,10 +132,16 @@ Both plans include Markdown and PDF export. The A4 PDF is created entirely in th
 Lato is distributed under the included SIL Open Font License. The transparent background was generated with OpenAI image generation for this project. PDF layout QA renders the actual exported file with Poppler. The regression approach was informed by [A PDF preview is a rendering contract](https://dev.to/dev_truth_f4c8f876c/a-pdf-preview-is-a-rendering-contract-lessons-from-a-japanese-worksheet-tool-hbp), by [dev_truth](https://dev.to/dev_truth_f4c8f876c): check exported fonts, geometry, complete content and pagination, not just the browser preview. No comments were present on the retrieved article.
 
 
-Free drafts publish their client name, brief, full scope and estimate on save with a visible notice before saving. Older public client names become public on the owner’s next save. The server tracks `clientNamePublishedAt` for public client-name visibility and supports existing publication markers for compatibility. Existing private drafts remain private. Authors must only save client information they have permission to publish.
+Free drafts publish their client name, brief, full scope and estimate on save with a visible notice before saving. All public drafts include the client name and masked author display name (Alexander → A***r). The server tracks `clientNamePublishedAt` for public client-name visibility and supports existing publication markers for compatibility. Existing private drafts remain private. Authors must only save client information they have permission to publish.
 
 ## Prepaid AllScale billing
 
 The server fixes each checkout to 100 USD cents for 30 days. Returning to `#billing=` never grants access: the server reconciles the provider intent, amount, currency, order and owner. Signed raw-body webhooks and manual payment checks share the same order-level idempotent grant. The atomic MongoDB user update records the paid order and extends access together; a failed ledger write can be repaired on retry without granting twice. Purchase again to add 30 days; no recurring subscription exists.
 
 Set the AllScale store webhook URL to `https://scopenote.dktirta.tech/api/billing/allscale/webhook`. Set server secrets `ALLSCALE_API_KEY` and `ALLSCALE_API_SECRET`, then `ALLSCALE_CHECKOUT_ENABLED=true` only after the store is ready. Read CONFIGURATION.md. No real payment has been completed during integration QA.
+
+## Transactional email
+
+Resend sends branded HTML and plain-text verification, password reset and payment receipt emails. The shared illustration in `public/email/` was generated with OpenAI image generation. Receipts are sent only for paid billing orders to the owning account email; a durable MongoDB `receiptOutbox` stores the immutable email and uses an order-specific Resend idempotency key. A one-minute worker retries delivery and backfills earlier paid orders without granting Premium again. Automatic ambiguous retries stop after 23 hours, before the provider idempotency key expires, for manual review. Email failure does not revoke purchased access. Accepted delivery is recorded separately from inbox delivery.
+
+Premium users can choose Public or Private per project; the default for new drafts is Private. Free new drafts remain Public. Switching back to Private removes anonymous access on save. Public data includes client name and only the first/last letters of the author's first display name; account email, owner ID and history stay private.

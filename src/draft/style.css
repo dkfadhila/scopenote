@@ -1877,3 +1877,5 @@ button:disabled{cursor:default;opacity:.55}
 
 /* ScopeNote identity: custom monogram shared by navigation and browser icons. */
 .logo-mark{display:block;width:36px;height:36px;flex-shrink:0;object-fit:contain}
+
+.visibility-control{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--secondary)}.visibility-control select{min-width:112px;padding:8px 12px;border:1px solid var(--line,#dbe0e5);background:var(--paper,#fff);color:var(--ink);border-radius:4px;font:inherit;font-size:14px}.visibility-control small{font-size:10px}

@@ -50,3 +50,9 @@ Tes koneksi tanpa pembayaran: `node scripts/check-allscale.mjs`. Tes regresi bil
 ## Ekspor proposal
 
 Free dan Premium sama-sama menyediakan ekspor Markdown dan PDF, dengan nama proyek, nama klien jika tersedia, scope lengkap, estimasi dan kredit “Made with ScopeNote”. PDF dibuat di browser; modul PDF baru dimuat saat tombol Download PDF diklik. Ekspor dari halaman publik tidak mengambil metadata klien privat.
+
+## Email kuitansi dan pilihan visibilitas
+
+Sesudah status pembayaran paid, kuitansi diproses melalui receiptOutbox dan Resend memakai key per order. Worker satu menit mengirim ulang pekerjaan tertunda dan kuitansi pembayaran lama yang belum terkirim. Pesan dan penerima disimpan tetap agar retry cocok dengan idempotency key. Retry ambigu setelah 23 jam memerlukan pemeriksaan manual. Tidak ada pengiriman ulang akses Premium. Email verifikasi/reset memakai template HTML dan teks dengan gambar `/email/scopenote-stationery.png`.
+
+Premium dapat memilih Public/Private; default Private. Pilihan berlaku ketika Save. Free baru selalu Public. Public menampilkan client name dan nama author disamarkan (Alexander → A***r), tanpa email akun/owner/history.
