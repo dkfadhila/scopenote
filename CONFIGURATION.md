@@ -57,6 +57,8 @@ Sesudah status pembayaran paid, kuitansi diproses melalui receiptOutbox dan Rese
 
 Premium dapat memilih Public/Private; default Private. Pilihan berlaku ketika Save. Free baru selalu Public. Public menampilkan client name dan nama author disamarkan (Alexander → A***r), tanpa email akun/owner/history.
 
-## Scheduled health check
+## Always-on compute and health check
 
-`.github/workflows/health-check.yml` checks the production `/api/health` endpoint every five minutes through GitHub Actions. It requires no credentials or local computer, checks the JSON status, and can also be run manually from Actions. Forks do not ping the production site. This is best-effort: GitHub schedules can be delayed, public-repository schedules stop after 60 days without repository activity, and Render Free can still restart or exhaust its shared instance-hour allowance. Disable the workflow in GitHub Actions when it is no longer needed.
+ScopeNote uses a single Render Starter compute instance (0.5 CPU, 512 MB RAM, US$7/month at upgrade), while the workspace remains Hobby. Paid compute does not sleep because of inactivity. Promotional credits offset eligible invoices; charges continue after credits are exhausted. The Blueprint uses `plan: starter` to match the service.
+
+`.github/workflows/health-check.yml` is available as a manual health check from GitHub Actions. Its five-minute schedule was removed after upgrading compute because keep-alive traffic is no longer needed. The endpoint `/api/health` remains available to Render and monitoring tools.

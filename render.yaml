@@ -2,7 +2,7 @@ services:
   - type: web
     name: scopenote
     runtime: node
-    plan: free
+    plan: starter
     domains:
       - scopenote.dktirta.tech
     buildCommand: npm ci --include=dev && npm run build
