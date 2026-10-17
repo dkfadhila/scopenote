@@ -6,4 +6,4 @@ These screenshots show the actual ScopeNote frontend with fictional Tanah Studio
 
 Architecture, payment and privacy figures were authored as editable OpenSlide pages in `open-slide/slides/scopenote-article/index.tsx` in the authoring workspace and captured from its preview route. Their source is archived in `docs/figures/scopenote-article.tsx` for inspection.
 
-The 45-second HyperFrames walkthrough is an edited sequence of real UI screenshots, not an uninterrupted screen recording and not a timed AI generation. Its English on-screen labels explain the flow. The existing narrated promo on DEV is separate and remains attached to the article header.
+The 40.5-second HyperFrames walkthrough is an edited sequence of real UI screenshots, not an uninterrupted screen recording and not a timed AI generation. English narration uses ElevenLabs Hope (upbeat and clear), model eleven_v4. Subtitles follow the generated character timestamps; quiet bundled pop effects punctuate key entrances. Its on-screen labels explain the flow. The existing narrated promo on DEV is separate and remains attached to the article header.
