@@ -1,5 +1,9 @@
 # ScopeNote
 
+Vercel migration setup and cutover checks: [VERCEL.md](VERCEL.md). The existing
+Render deployment remains the rollback target until Atlas connectivity and the
+Vercel production flow have been verified.
+
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a PDF or Markdown proposal.
 
 **Status:** account migration: email/password accounts, public Free drafts/scopes, server-side usage limits, password reset and email verification. There is no demo or simulated entry point. Premium is prepaid: US$1 once for 30 days through AllScale, with no subscription or automatic renewal. Checkout requires server configuration. Resend sender domain is verified; verification and reset email delivery plus old-session revocation passed against the production API. See CONFIGURATION.md.

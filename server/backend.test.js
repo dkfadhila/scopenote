@@ -18,6 +18,16 @@ test('production refuses an unprotected private workspace',()=>{
   assert.throws(()=>readConfig({NODE_ENV:'production'}),/requires/);
   assert.throws(()=>readConfig({GEMMA_MODEL:'gemini-2.5-flash'}),/actual Gemma/);
 });
+
+test('maintenance requires its own bearer secret and awaits scheduled work',async()=>{
+  let calls=0;
+  await withServer(readConfig({CRON_SECRET:'private-maintenance-key'}),async url=>{
+    assert.equal((await fetch(`${url}/api/internal/maintenance`)).status,401);
+    assert.equal((await fetch(`${url}/api/internal/maintenance`,{headers:{Authorization:'Bearer wrong'}})).status,401);
+    const response=await fetch(`${url}/api/internal/maintenance`,{headers:{Authorization:'Bearer private-maintenance-key'}});
+    assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true});assert.equal(calls,1);
+  },{billing:{retryReceipts:async()=>{calls++;}}});
+});
 test('tampered and wrong-secret session tokens fail',()=>{
   const token=createSession('a'.repeat(40));assert(validSession(token,'a'.repeat(40)));assert(!validSession(`${token}x`,'a'.repeat(40)));assert(!validSession(token,'b'.repeat(40)));assert(!validSession('invalid','a'.repeat(40)));
 });

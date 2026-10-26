@@ -5,6 +5,7 @@ import { NotePencil, Plus, ArrowRight, ArrowLeft, FolderSimple, FileText, Microp
 import '@fontsource-variable/dm-sans';
 import { estimate, proposalText } from '../domain';
 import './style.css';
+import {transcribeFile} from '../transcribe-file.js';
 const blankProject = {
   id: crypto.randomUUID(),
   client: '',
@@ -389,12 +390,7 @@ function App() {
     setBusy(true);
     setPendingAudio(null);
     try {
-      const form = new FormData();
-      form.append('audio', file);
-      const data = await api('/api/transcribe', {
-        method: 'POST',
-        body: form
-      });
+      const data = await transcribeFile(file,api);
       update({
         brief: data.text,
         scope: null,

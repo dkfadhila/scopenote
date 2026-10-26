@@ -3,6 +3,7 @@ export function readConfig(env = process.env) {
   const config = {
     production, accounts:env.ACCOUNT_MODE==='true'||(production&&env.ACCOUNT_MODE!=='false'), resendKey:env.RESEND_API_KEY||'',emailFrom:env.EMAIL_FROM||'', dailyAiLimit:Math.min(500,Math.max(1,Number(env.AI_DAILY_LIMIT)||50)), port: Number(env.PORT || 3001), host: production ? '0.0.0.0' : '127.0.0.1', origin: env.APP_ORIGIN || '',
     password: env.WORKSPACE_PASSWORD || '', sessionSecret: env.SESSION_SECRET || '',
+    blobToken:env.BLOB_READ_WRITE_TOKEN||'',maintenanceSecret:env.CRON_SECRET||'',hosting:env.VERCEL?'vercel':env.RENDER?'render':'local',
     googleKey: env.GOOGLE_GENERATIVE_AI_API_KEY || '', model: env.GEMMA_MODEL || 'gemma-4-26b-a4b-it',
     mongoUri: env.MONGODB_URI || '', mongoDb: env.MONGODB_DATABASE || 'scopenote',
     allscaleKey:env.ALLSCALE_API_KEY||'',allscaleSecret:env.ALLSCALE_API_SECRET||'',allscaleEnabled:env.ALLSCALE_CHECKOUT_ENABLED==='true',

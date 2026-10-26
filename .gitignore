@@ -8,3 +8,4 @@ artifacts/
 playwright-report/
 test-results/
 .taste-skill/
+.vercel

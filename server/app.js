@@ -9,18 +9,24 @@ import { projectInput, projectId, briefInput } from './schemas.js';
 import { createSession, validSession, sessionFrom, passwordMatches } from './auth.js';
 import {createAccounts} from './accounts.js';
 import {createBilling} from './billing.js';
+import {createAudioUploads} from './audio-uploads.js';
 
 export function createApp(config,{storage,generate,telemetry,transcribe=transcribeAudio,accounts:providedAccounts,billing:providedBilling}){
   const app=express();app.disable('x-powered-by');if(config.production)app.set('trust proxy',1);
   const accounts=providedAccounts||(config.accounts?createAccounts(config,storage):null);
   const billing=providedBilling||createBilling(config,storage);
+  const audioUploads=createAudioUploads(config,storage);
   app.locals.billing=billing;
   const tokenFrom=req=>req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith('scopenote_account='))?.slice('scopenote_account='.length);
   const cookieOptions={httpOnly:true,secure:config.production,sameSite:'strict',maxAge:7*86400000,path:'/'};
-  app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');if(config.production){res.setHeader('Strict-Transport-Security','max-age=31536000');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");}next();});
+  app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');if(config.production){res.setHeader('Strict-Transport-Security','max-age=31536000');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'"+(config.blobToken?' https://*.blob.vercel-storage.com':'')+"; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");}next();});
   const webhookLimit=rateLimit({windowMs:60000,limit:120,standardHeaders:'draft-7',legacyHeaders:false});
   app.post('/api/billing/allscale/webhook',webhookLimit,express.raw({type:'application/json',limit:'32kb'}),async(req,res)=>{if(!Buffer.isBuffer(req.body))return res.status(400).json({error:'A JSON payment notification is required.'});res.json(await billing.webhook({headers:req.headers,rawBody:req.body,path:req.originalUrl}));});
   app.use(express.json({limit:'96kb'}));
+  app.get('/api/internal/maintenance',async(req,res)=>{
+    if(!config.maintenanceSecret||!passwordMatches(req.headers.authorization||'',`Bearer ${config.maintenanceSecret}`))return res.status(401).json({error:'Unauthorized.'});
+    await billing.retryReceipts();await audioUploads.cleanup();res.json({ok:true});
+  });
   app.get('/draft.html',(_req,res)=>res.redirect(301,'/'));
   app.use('/api',(req,res,next)=>{
     res.setHeader('Cache-Control','no-store');const origin=req.headers.origin;
@@ -58,7 +64,7 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
   app.post('/api/account/resend-verification',requireAccounts,requireUser,resetLimit,async(req,res)=>res.json(await accounts.resendVerification(req.user)));
   app.get('/api/health',(_req,res)=>res.json({status:'ok'}));
   app.get('/api/status',(req,res)=>res.json({accountMode:!!config.accounts,authenticated:authenticated(req),passwordRequired:!config.accounts&&!!config.password,storage:config.mongoUri?'mongodb':'browser',services:[
-    {id:'render',name:'Render',configured:!!process.env.RENDER},{id:'gemma',name:`Gemma · ${config.model}`,configured:!!config.googleKey},{id:'mastra',name:'Mastra workflow',configured:true},{id:'mongodb',name:'MongoDB Atlas',configured:!!config.mongoUri},{id:'sentry',name:'Sentry Agent Tracing',configured:!!config.sentryDsn},{id:'elevenlabs',name:'ElevenLabs Scribe',configured:!!config.elevenKey}]}));
+    {id:config.hosting==='vercel'?'vercel':'render',name:config.hosting==='vercel'?'Vercel':'Render',configured:['render','vercel'].includes(config.hosting)},{id:'gemma',name:`Gemma · ${config.model}`,configured:!!config.googleKey},{id:'mastra',name:'Mastra workflow',configured:true},{id:'mongodb',name:'MongoDB Atlas',configured:!!config.mongoUri},{id:'sentry',name:'Sentry Agent Tracing',configured:!!config.sentryDsn},{id:'elevenlabs',name:'ElevenLabs Scribe',configured:!!config.elevenKey}]}));
   app.post('/api/session',rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many sign-in attempts. Try again later.'}}),(req,res)=>{
     if(config.accounts)return res.status(410).json({error:'Use your email and password to sign in. Shared workspace access is retired.'});
     if(!config.password)return res.json({authenticated:true});
@@ -69,6 +75,15 @@ export function createApp(config,{storage,generate,telemetry,transcribe=transcri
   app.use('/api',(req,res,next)=>authenticated(req)?next():res.status(401).json({error:config.accounts?'Sign in to access your private projects.':'Unlock this private workspace in Connections first.'}));
   const aiQuota=kind=>async(req,res,next)=>{if(accounts){if(accounts.mailReady()&&!req.user.emailVerified)return res.status(403).json({error:'Verify your email before using AI. You can still edit and save projects.'});await accounts.consume(req.user.id,kind);}next();};
   const aiLimit=rateLimit({windowMs:60*1000,limit:6,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Please wait a minute before another AI request.'}});
+  const voiceReady=(req,res,next)=>{
+    if(!config.elevenKey)return res.status(503).json({error:'Voice transcription is not configured.'});
+    if(accounts?.mailReady()&&!req.user?.emailVerified)return res.status(403).json({error:'Verify your email before using AI.'});next();
+  };
+  app.post('/api/audio-upload',requireAccounts,requireUser,aiLimit,voiceReady,async(req,res)=>res.json(await audioUploads.issue(req)));
+  app.post('/api/transcribe-upload',requireAccounts,requireUser,aiLimit,voiceReady,async(req,res)=>res.json(await audioUploads.transcribe(req,{
+    consume:()=>accounts.consume(req.user.id,'voice'),
+    run:file=>telemetry.traced('gen_ai.execute_tool','ElevenLabs / transcribe brief',()=>transcribe(config,file))
+  })));
   app.post('/api/scope',aiLimit,async(req,res,next)=>{if(!briefInput.safeParse(req.body).success)return res.status(400).json({error:'Use a brief of 30–20,000 characters.'});if(!config.googleKey)return res.status(503).json({error:'AI drafting is not configured yet. Please try again later.'});next();},aiQuota('scopes'),async(req,res)=>res.json(await generate(briefInput.parse(req.body).brief)));
   app.get('/api/projects',async(req,res)=>res.json({projects:await storage.list(req.user?.id)}));
   const editLimit=rateLimit({windowMs:60000,limit:30,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many changes. Please wait a minute.'}});
