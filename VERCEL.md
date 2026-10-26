@@ -4,6 +4,8 @@
 
 The production domain now points to Vercel's recommended CNAME
 `0b8eaba22d395050.vercel-dns-017.com`; Vercel reports DNS correctly configured.
+Cloudflare TXT verification completed and Vercel issued the HTTPS certificate.
+The custom domain's `/api/status` confirms Vercel hosting over valid HTTPS.
 Atlas `Cluster1` in project `6aa11807d0bdaa5789f85fe6` is shared with the previous
 deployment. The owner explicitly approved an Atlas `0.0.0.0/0` network entry for
 Vercel Hobby's dynamic outbound IPs. Database credentials and TLS remain required.
