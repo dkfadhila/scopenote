@@ -1,8 +1,8 @@
 # ScopeNote
 
-Vercel migration setup and cutover checks: [VERCEL.md](VERCEL.md). The existing
-Render deployment remains the rollback target until Atlas connectivity and the
-Vercel production flow have been verified.
+Production is deployed on Vercel at https://scopenote.dktirta.tech. Deployment,
+private audio uploads and maintenance are documented in [VERCEL.md](VERCEL.md).
+The previous Render deployment is retained as a rollback target.
 
 A scope-of-work app for independent designers and developers. Bring a client brief or voice note, generate a draft with Gemma through Mastra, edit the document and hours, save the project, and export a PDF or Markdown proposal.
 

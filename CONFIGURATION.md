@@ -1,8 +1,8 @@
 # Konfigurasi ScopeNote
 
-Konfigurasi migrasi Vercel, audio privat 12 MB, maintenance terjadwal, dan
-pemeriksaan sebelum pindah DNS ada di [VERCEL.md](VERCEL.md). Bagian Render di
-bawah tetap menjadi referensi deployment lama selama migrasi belum selesai.
+Production berjalan di Vercel. Konfigurasi audio privat 12 MB, maintenance
+terjadwal, dan hasil migrasi ada di [VERCEL.md](VERCEL.md). Bagian Render di bawah
+tetap menjadi referensi deployment lama untuk rollback.
 
 Frontend dan API berjalan di satu service Render. Semua secret hanya di Environment Render atau .env lokal yang diabaikan Git. Jangan gunakan awalan VITE_ untuk secret.
 

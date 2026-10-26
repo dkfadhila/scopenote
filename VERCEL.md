@@ -1,5 +1,26 @@
 # Vercel deployment
 
+## Migration record — 26 October 2026
+
+The production domain now points to Vercel's recommended CNAME
+`0b8eaba22d395050.vercel-dns-017.com`; Vercel reports DNS correctly configured.
+Atlas `Cluster1` in project `6aa11807d0bdaa5789f85fe6` is shared with the previous
+deployment. The owner explicitly approved an Atlas `0.0.0.0/0` network entry for
+Vercel Hobby's dynamic outbound IPs. Database credentials and TLS remain required.
+The previous restricted entries are retained for rollback.
+
+Live tests against the Vercel deployment passed: account/password login, private
+draft save and reopen, history, Gemma/Mastra generation, a 5 MB direct private
+audio upload and ElevenLabs transcription, immediate temporary-audio deletion,
+draft deletion and logout. The synthetic test account and its records were
+removed. The local suite passed 68 tests.
+
+Production secrets are configured on Vercel. The maintenance bearer secret is
+also stored in GitHub Actions. GitHub's Vercel integration still lacks repository
+access; use `vercel deploy --prod` for updates until the integration is connected.
+Render has not been deleted or suspended; its paid compute may continue billing
+while retained for rollback.
+
 The migration keeps the Vite frontend and Express API in one Vercel project. The
 custom domain remains `scopenote.dktirta.tech`, and the existing Atlas database,
 email sender and AllScale webhook URL are retained. DNS must only move after the
